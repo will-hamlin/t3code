@@ -1,0 +1,15 @@
+@keyframes drift {
+  to {
+    transform: translate(16px, 16px);
+  }
+}
+
+.moving {
+  animation: drift 8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moving {
+    animation: none;
+  }
+}

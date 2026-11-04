@@ -16,6 +16,11 @@ export const THREAD_DETAILS_ITEMS = [
   { id: "context", label: "Context window", defaultVisible: false },
 ] as const;
 
+const agentManagedItems = new Set(["environment", "branch", "gitActions", "changes"]);
+export const THREAD_DETAILS_USER_ITEMS = THREAD_DETAILS_ITEMS.filter(
+  (item) => !agentManagedItems.has(item.id),
+);
+
 export type ThreadDetailsItemId = (typeof THREAD_DETAILS_ITEMS)[number]["id"];
 export type ThreadDetailsVisibility = Readonly<Record<ThreadDetailsItemId, boolean>>;
 
@@ -38,7 +43,8 @@ export function resolveThreadDetailsVisibility(
   return Object.fromEntries(
     THREAD_DETAILS_ITEMS.map((item) => [
       item.id,
-      settings.threadDetailsItems[item.id] ?? defaultVisible(item, settings),
+      !agentManagedItems.has(item.id) &&
+        (settings.threadDetailsItems[item.id] ?? defaultVisible(item, settings)),
     ]),
   ) as Record<ThreadDetailsItemId, boolean>;
 }
@@ -54,7 +60,7 @@ export function setThreadDetailsItem(
 }
 
 export function isDefaultThreadDetailsVisibility(visibility: ThreadDetailsVisibility) {
-  return THREAD_DETAILS_ITEMS.every((item) => visibility[item.id] === item.defaultVisible);
+  return THREAD_DETAILS_USER_ITEMS.every((item) => visibility[item.id] === item.defaultVisible);
 }
 
 /** Also clears the retired Labs flag, so Usage and Context return to off. */

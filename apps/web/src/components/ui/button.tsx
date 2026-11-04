@@ -39,6 +39,12 @@ const buttonVariants = cva(
         xs: "h-7 gap-1 px-[calc(--spacing(2)-1px)] text-sm sm:h-6 sm:text-xs [&_svg:not([class*='size-'])]:size-4 sm:[&_svg:not([class*='size-'])]:size-3.5",
       },
       variant: {
+        "text-muted":
+          "border-transparent bg-transparent text-muted-foreground font-normal underline-offset-4 [:hover,[data-popup-open]]:underline motion-reduce:transition-none",
+        "text-primary":
+          "border-transparent bg-transparent text-primary font-mono text-xs underline-offset-4 [:hover,[data-popup-open]]:underline motion-reduce:transition-none",
+        "flat-primary":
+          "border-primary bg-primary text-primary-foreground font-mono text-xs font-medium tracking-wide shadow-none active:scale-100 [:hover,[data-pressed]]:bg-primary/90 motion-reduce:transition-none",
         default:
           "not-disabled:inset-shadow-[0_1px_--theme(--color-white/16%)] border-primary bg-primary text-primary-foreground shadow-primary/24 shadow-xs [:active,[data-pressed]]:inset-shadow-[0_1px_--theme(--color-black/8%)] [:disabled,:active,[data-pressed]]:shadow-none [:hover,[data-pressed]]:bg-primary/90",
         destructive:

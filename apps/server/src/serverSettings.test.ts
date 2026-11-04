@@ -2790,3 +2790,35 @@ it.layer(Layer.mergeAll(NodeServices.layer, NodeCrypto.layer))(
     );
   },
 );
+
+it.effect("persists Marshal assignment and preserves other project settings", () =>
+  Effect.gen(function* () {
+    const config = yield* ServerConfig.ServerConfig;
+    const fs = yield* FileSystem.FileSystem;
+    const service = yield* ServerSettingsModule.ServerSettingsService;
+    const projectId = ProjectId.make("marshal-project");
+    yield* service.updateSettings({
+      projectSettingsOverrides: {
+        [projectId]: { marshalAgent: "Ney", defaultAutoPull: false },
+      },
+    });
+    yield* service.updateSettings({ responseStreamingMode: "turn" });
+    const persisted = yield* decodeServerSettingsJson(
+      yield* fs.readFileString(config.settingsPath),
+    );
+    assert.deepEqual(persisted.projectSettingsOverrides[projectId], {
+      marshalAgent: "Ney",
+      defaultAutoPull: false,
+    });
+    assert.equal(
+      (yield* service.getSettings).projectSettingsOverrides[projectId]?.marshalAgent,
+      "Ney",
+    );
+  }).pipe(
+    Effect.provide(
+      layerServerSettings().pipe(
+        Layer.provideMerge(Layer.mergeAll(NodeServices.layer, NodeCrypto.layer)),
+      ),
+    ),
+  ),
+);

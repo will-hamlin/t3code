@@ -3,6 +3,10 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./projectOrchestrators": {
+      "types": "./src/projectOrchestrators.ts",
+      "import": "./src/projectOrchestrators.ts"
+    },
     "./changedFileKind": {
       "types": "./src/changedFileKind.ts",
       "import": "./src/changedFileKind.ts"

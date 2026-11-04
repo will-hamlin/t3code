@@ -2925,6 +2925,18 @@ export const layerWsRpc = (
                 }),
             ),
           ),
+        [WS_METHODS.projectsCreateDirectory]: (input) =>
+          workspaceFileSystem.createDirectory(input).pipe(
+            Effect.mapError(
+              (cause) =>
+                new ProjectWriteFileError({
+                  cwd: input.cwd,
+                  relativePath: input.relativePath,
+                  ...projectFileFailureContext(cause),
+                  cause,
+                }),
+            ),
+          ),
         [WS_METHODS.projectsWriteFile]: (input) =>
           workspaceFileSystem.writeFile(input).pipe(
             Effect.mapError(

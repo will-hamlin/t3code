@@ -1,3 +1,6 @@
+import { SubagentInspector } from "./chat/SubagentInspector";
+import { useSidebarVisibility } from "./ui/sidebar";
+import { DotMatrix } from "./DotMatrix";
 import { ChildThreadApprovals } from "./chat/ChildThreadApprovals";
 import { workspaceAreaProps } from "../lib/workspaceFocus";
 import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
@@ -424,6 +427,7 @@ export default function ChatView(props: ChatViewProps) {
     embedded: parentPanel,
   } = props;
   const embedded = parentPanel !== undefined;
+  const sidebarVisible = useSidebarVisibility();
   const canOperateThread = useEnvironmentScope(environmentId, AuthOrchestrationOperateScope);
   const canOperateTerminal = useEnvironmentScope(environmentId, AuthTerminalOperateScope);
   const draftId = routeKind === "draft" ? props.draftId : null;
@@ -3386,6 +3390,7 @@ export default function ChatView(props: ChatViewProps) {
               {...conversationArea}
               className="relative flex min-h-0 flex-1 flex-col bg-background"
             >
+              <DotMatrix moving={isWorking} />
               <WorkspaceMutationIdContext value={workspaceMutationId}>
                 <ThreadTimeline
                   pendingApprovals={pendingApprovals}
@@ -3754,7 +3759,7 @@ export default function ChatView(props: ChatViewProps) {
                                 projectId={activeThread.projectId}
                                 worktreePath={activeThread.worktreePath}
                                 isServerThread={isServerThread}
-                                showGitControls={isGitRepo}
+                                showGitControls={false}
                                 {...(routeKind === "draft" && draftId ? { draftId } : {})}
                                 onEnvModeChange={onEnvModeChangeStable}
                                 startFromOrigin={startFromOrigin}
@@ -4002,6 +4007,13 @@ export default function ChatView(props: ChatViewProps) {
         </ChatRightPanel>
       ) : null}
 
+      {!embedded && !sidebarVisible && !isMobileViewport ? (
+        <SubagentInspector
+          key={routeThreadKey}
+          threadRef={routeKind === "server" ? routeThreadRef : null}
+          parentPanel={sideChatParentPanel}
+        />
+      ) : null}
       <RevertConfirmHost threadKey={routeThreadKey} onConfirm={onConfirmRevertStable} />
       {embedded ? null : <LinkPullRequestDialogHost />}
       <ThreadVisitWatermark threadRef={routeThreadRef} />

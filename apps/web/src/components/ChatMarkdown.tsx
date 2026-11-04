@@ -376,7 +376,7 @@ const GITHUB_ALERT_PRESENTATIONS: Record<
     label: "Caution",
     Icon: OctagonAlertIcon,
     borderClassName: "border-red-500/70",
-    titleClassName: "text-red-600 dark:text-red-400",
+    titleClassName: "text-(--oc-ginkgo) dark:text-(--oc-ginkgo)",
   },
 };
 

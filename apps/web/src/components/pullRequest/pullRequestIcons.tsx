@@ -43,7 +43,7 @@ export const PULL_REQUEST_STATE_PRESENTATION = {
   },
   closed: {
     label: "Closed",
-    toneClassName: "text-red-600 dark:text-red-300/90",
+    toneClassName: "text-(--oc-ginkgo) dark:text-(--oc-ginkgo)",
     Icon: PullRequestGlyph.closed,
   },
   merged: {

@@ -1,0 +1,105 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+/* Modified Overcast theme shared by every app surface, including portals. */
+body,
+[data-overcast-dashboard] {
+  --oc-tracking-label: 0.12em;
+  --oc-tracking-display: -0.035em;
+  --oc-tracking-title: -0.01em;
+  --oc-collar: #2b4675;
+  --oc-signal: #c8402f;
+  --oc-ginkgo: #e3b23c;
+  --oc-font-display: "Inter Tight", Inter, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --background: #000000;
+  --foreground: #e6e7e9;
+  --muted-foreground: #9a9ea5;
+  --contrast-muted-foreground: #9a9ea5;
+  --border: #33363b;
+  --primary: var(--oc-ginkgo);
+  --primary-foreground: #000000;
+  --ring: var(--oc-collar);
+  --accent: var(--oc-collar);
+  --destructive: var(--oc-ginkgo);
+  --destructive-foreground: var(--oc-ginkgo);
+  --error: var(--oc-ginkgo);
+  --error-foreground: var(--oc-ginkgo);
+  --control-radius: 2px;
+}
+
+body {
+  --card: #080808;
+  --card-foreground: var(--foreground);
+  --popover: #080808;
+  --popover-foreground: var(--foreground);
+  --muted: #161616;
+  --secondary: #161616;
+  --secondary-foreground: var(--foreground);
+  --accent-foreground: var(--foreground);
+  --input: var(--border);
+  --sidebar: var(--background);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-muted-foreground: var(--muted-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-row-hover: var(--oc-collar);
+  --sidebar-row-active: var(--oc-collar);
+  --sidebar-row-selected: var(--oc-collar);
+  --sidebar-control-surface: #161616;
+  --message-surface: #101010;
+  --message-foreground: var(--foreground);
+  --message-action: var(--oc-ginkgo);
+  --message-action-foreground: #000000;
+  --message-action-hover: var(--oc-collar);
+  --code-background: #101010;
+  --code-foreground: var(--foreground);
+  --terminal-background: #000000;
+  --terminal-foreground: var(--foreground);
+  --radius: 2px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
+  --glass-blur: 0px;
+  --glass-opacity: 100%;
+  --glass-saturation: 100%;
+  background: var(--background);
+  color: var(--foreground);
+  border-top: 4px solid var(--oc-collar);
+  box-sizing: border-box;
+}
+body h1,
+body h2,
+body h3 {
+  font-family: var(--oc-font-display);
+}
+body [data-slot$="popup"],
+body [data-slot="dialog-content"],
+body [data-slot="button"],
+body [data-slot="input"],
+body [data-slot="menu-sub-content"] {
+  box-shadow: none;
+  border-radius: var(--control-radius);
+}
+body [data-slot$="popup"],
+body [data-slot="dialog-content"],
+body [data-slot="menu-sub-content"] {
+  background: var(--popover);
+  border-color: var(--border);
+  backdrop-filter: none;
+}
+
+/* The modified palette uses navy for interaction and Ginkgo for emphasis. */
+body
+  :is(button, a, [role="button"], [role="menuitem"], [role="option"]):not(:disabled):not(
+    [aria-disabled="true"]
+  ):hover,
+body [data-highlighted]:not([data-disabled]) {
+  background-color: var(--oc-collar);
+  color: var(--foreground);
+}
+body ::selection {
+  background-color: var(--oc-collar);
+  color: var(--foreground);
+}

@@ -493,6 +493,28 @@ it.layer(layerTest, { excludeTestServices: true })("WorkspaceFileSystemLive", (i
       }),
     );
 
+    it.effect("creates an empty project directory and rejects escape and duplicate paths", () =>
+      Effect.gen(function* () {
+        const service = yield* WorkspaceFileSystem.WorkspaceFileSystem;
+        const fs = yield* FileSystem.FileSystem;
+        const path = yield* Path.Path;
+        const cwd = yield* makeTempDir;
+        yield* service.createDirectory({ cwd, relativePath: "assets" });
+        expect(yield* fs.readDirectory(path.join(cwd, "assets"))).toEqual([]);
+        expect(
+          yield* service.createDirectory({ cwd, relativePath: "assets" }).pipe(Effect.isFailure),
+        ).toBe(true);
+        expect(
+          yield* service
+            .createDirectory({ cwd, relativePath: "../outside" })
+            .pipe(Effect.isFailure),
+        ).toBe(true);
+        expect(
+          yield* service.createDirectory({ cwd, relativePath: ".git" }).pipe(Effect.isFailure),
+        ).toBe(true);
+      }),
+    );
+
     it.effect("rejects writes by absolute path", () =>
       Effect.gen(function* () {
         const workspaceFileSystem = yield* WorkspaceFileSystem.WorkspaceFileSystem;

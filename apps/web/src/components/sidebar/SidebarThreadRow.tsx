@@ -1340,7 +1340,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                         render={
                           <button
                             type="button"
-                            aria-label="Un-settle thread"
+                            aria-label="Reopen thread"
                             onClick={handleUnsettleClick}
                             onPointerDown={handleActionPointerDown}
                             className={cn(
@@ -1352,7 +1352,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                       >
                         <Undo2Icon className="mb-px size-3.5" />
                       </TooltipTrigger>
-                      <TooltipPopup side="top">Un-settle thread</TooltipPopup>
+                      <TooltipPopup side="top">Reopen thread</TooltipPopup>
                     </Tooltip>
                   ) : (
                     <Tooltip>
@@ -1360,7 +1360,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                         render={
                           <button
                             type="button"
-                            aria-label="Settle thread"
+                            aria-label="Mark complete"
                             onClick={handleSettleClick}
                             onPointerDown={handleActionPointerDown}
                             className={cn(
@@ -1372,7 +1372,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                       >
                         <CheckIcon className="size-3" />
                       </TooltipTrigger>
-                      <TooltipPopup side="top">Settle thread</TooltipPopup>
+                      <TooltipPopup side="top">Mark complete</TooltipPopup>
                     </Tooltip>
                   )}
                   {jumpHintLabel ? <JumpHintBadge label={jumpHintLabel} /> : null}
@@ -1429,21 +1429,8 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
           >
             <div className="flex h-5 min-w-0 items-center gap-1.5">
               {draftIndicator}
-              {props.project ? (
-                <ProjectFavicon project={props.project} className="size-4 shrink-0" />
-              ) : null}
-              {/* Left of the status slot, the pin would slide when hover swaps the
-                label for the wider row controls. */}
               {pinIndicator}
-              {props.projectDisplayName ? (
-                <span
-                  className={cn("min-w-0 flex-1 truncate font-normal text-secondary-label text-xs")}
-                >
-                  {props.projectDisplayName}
-                </span>
-              ) : (
-                <span className="flex-1" />
-              )}
+              <span className="flex-1" />
               {sortable?.isDragging ? (
                 dragDestination
               ) : (
@@ -1552,7 +1539,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                             render={
                               <button
                                 type="button"
-                                aria-label="Settle thread"
+                                aria-label="Mark complete"
                                 onClick={handleSettleClick}
                                 onPointerDown={handleActionPointerDown}
                                 className="-mr-1 inline-flex cursor-pointer items-center gap-1 rounded-md bg-transparent px-1.5 text-xs text-muted-foreground hover:text-foreground"
@@ -1562,7 +1549,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                             <CheckIcon className="size-3.5" />
                             Settle
                           </TooltipTrigger>
-                          <TooltipPopup>Settle thread</TooltipPopup>
+                          <TooltipPopup>Mark complete</TooltipPopup>
                         </Tooltip>
                       ) : null}
                     </span>

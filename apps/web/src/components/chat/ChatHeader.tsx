@@ -1,3 +1,5 @@
+import { useProjectMarshal } from "../../hooks/useProjectMarshal";
+import { MarshalIcon } from "../MarshalIcon";
 import {
   AuthOrchestrationOperateScope,
   type EnvironmentId,
@@ -30,7 +32,6 @@ import { canShareWithGuestAtom } from "./guestShareAvailability";
 import { useAtomValue } from "@effect/atom-react";
 import { useOrchestrationCommand } from "../../state/use-orchestration-command";
 import { readEnvironmentScope, useEnvironmentScope } from "../../state/session";
-import { ProjectFavicon } from "../ProjectFavicon";
 import {
   WorkspaceBreadcrumb,
   WorkspaceBreadcrumbItem,
@@ -85,6 +86,11 @@ export const ChatHeader = memo(function ChatHeader({
   onFindInThread,
 }: ChatHeaderProps) {
   const activeProjectName = activeProject?.isScratch ? "No project" : activeProject?.title;
+  const marshal = useProjectMarshal(
+    activeProject
+      ? { environmentId: activeProject.environmentId, projectId: activeProject.id }
+      : null,
+  );
   const activeProjectCwd = activeProject?.workspaceRoot ?? null;
   const interfaceFont = useClientSettings((settings) => settings.fontFamilySans);
   const breadcrumbContainerRef = useRef<HTMLDivElement>(null);
@@ -300,13 +306,13 @@ export const ChatHeader = memo(function ChatHeader({
                   render={
                     <button
                       type="button"
-                      aria-label={`New thread in ${activeProjectName}`}
+                      aria-label={`Project: ${activeProjectName}`}
                       onClick={onNewThreadInProject}
                       className="inline-flex min-w-0 max-w-full cursor-pointer items-center gap-1.5 rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                     />
                   }
                 >
-                  <ProjectFavicon project={activeProject} className="size-3.5" />
+                  <MarshalIcon name={marshal} className="size-3.5" />
                   <WorkspaceBreadcrumbText className="max-w-40">
                     {activeProjectName}
                   </WorkspaceBreadcrumbText>

@@ -7,7 +7,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { useLocation, useRouter, type AnyRouter } from "@tanstack/react-router";
+import { useLocation, useMatches, useRouter, type AnyRouter } from "@tanstack/react-router";
 
 import { moveWorkspaceFocus, workspaceAreaProps } from "../lib/workspaceFocus";
 import { isCommandPaletteOpen } from "../commandPaletteBus";
@@ -312,9 +312,20 @@ function registerAppShellCommands(router: AnyRouter, shellElement: Element): () 
   };
 }
 
+// Keep chrome synchronized with the committed route and retain the dashboard under modals.
+function useDashboardBackground() {
+  const pathname = useMatches({ select: (matches) => matches.at(-1)?.pathname ?? "/" });
+  const [background, setBackground] = useState(pathname === "/");
+  if (!isAppModalPage(pathname) && background !== (pathname === "/")) {
+    setBackground(pathname === "/");
+  }
+  return isAppModalPage(pathname) ? background : pathname === "/";
+}
+
 function SidebarControl() {
   const router = useRouter();
   const usagePageOpen = useLocation({ select: (location) => location.pathname === "/usage" });
+  const dashboardOpen = useDashboardBackground();
   const keybindings = useAtomValue(primaryServerKeybindingsAtom);
   const { toggleSidebar, isMobile, mobileSheetMounted } = useSidebar();
   const isSidebarVisible = useSidebarVisibility();
@@ -376,7 +387,7 @@ function SidebarControl() {
       ref={appShellCommandsRef}
       className={cn(
         "pointer-events-none fixed left-[var(--workspace-controls-left)] top-[var(--workspace-controls-top)] z-50 ml-px flex h-[var(--workspace-topbar-height)] items-center",
-        isMobile && mobileSheetMounted && "hidden",
+        ((isMobile && mobileSheetMounted) || dashboardOpen) && "hidden",
       )}
       data-sidebar-control=""
     >
@@ -409,7 +420,8 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   }));
   const { active: panelAnimationsActive, durationMs: panelAnimationDurationMs } =
     usePanelAnimationSettings();
-  const pathname = useLocation({ select: (location) => location.pathname });
+  const pathname = useMatches({ select: (matches) => matches.at(-1)?.pathname ?? "/" });
+  const dashboardOpen = useDashboardBackground();
   const panelAnimationsSuppressed = usePanelNavigationSuppression(pathname);
   const routePanelAnimationsActive = panelAnimationsActive && !panelAnimationsSuppressed;
   const isMacosDesktop = isElectron && isMacPlatform(navigator.platform);
@@ -451,27 +463,29 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
         style={sidebarProviderStyle}
       >
         <SidebarBrandWidthProbe isElectron={isElectron} onWidthChange={setBrandWidth} />
-        <Sidebar
-          side="left"
-          collapsible="offcanvas"
-          data-app-sidebar=""
-          {...sidebarArea}
-          role="navigation"
-          aria-label="Threads"
-          resizable={{
-            maxWidth: sidebarMaximumWidth,
-            minWidth: sidebarMinimumWidth,
-            shouldAcceptWidth: ({ currentWidth, nextWidth, wrapper }) =>
-              nextWidth <= currentWidth ||
-              wrapper.clientWidth - nextWidth >= THREAD_MAIN_CONTENT_MIN_WIDTH,
-            storageKey: THREAD_SIDEBAR_WIDTH_STORAGE_KEY,
-            onResize: setSidebarWidth,
-          }}
-          style={windowControlsInsetStyle}
-        >
-          <ThreadSidebar routeReveal={sidebarRouteReveal} />
-          <SidebarRail onDoubleClick={resetSidebarWidth} />
-        </Sidebar>
+        {!dashboardOpen ? (
+          <Sidebar
+            side="left"
+            collapsible="offcanvas"
+            data-app-sidebar=""
+            {...sidebarArea}
+            role="navigation"
+            aria-label="Threads"
+            resizable={{
+              maxWidth: sidebarMaximumWidth,
+              minWidth: sidebarMinimumWidth,
+              shouldAcceptWidth: ({ currentWidth, nextWidth, wrapper }) =>
+                nextWidth <= currentWidth ||
+                wrapper.clientWidth - nextWidth >= THREAD_MAIN_CONTENT_MIN_WIDTH,
+              storageKey: THREAD_SIDEBAR_WIDTH_STORAGE_KEY,
+              onResize: setSidebarWidth,
+            }}
+            style={windowControlsInsetStyle}
+          >
+            <ThreadSidebar routeReveal={sidebarRouteReveal} />
+            <SidebarRail onDoubleClick={resetSidebarWidth} />
+          </Sidebar>
+        ) : null}
         {children}
         <BackgroundThreadAnnouncer />
         <SidebarControl />

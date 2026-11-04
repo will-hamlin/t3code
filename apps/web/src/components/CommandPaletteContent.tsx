@@ -1,8 +1,6 @@
-import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
 import { type ComponentProps, type ReactNode } from "react";
 
 import { Command, CommandFooter, CommandInput, CommandPanel } from "./ui/command";
-import { Kbd, KbdGroup } from "./ui/kbd";
 
 /**
  * A view replacing another inside an open dialog mounts with focus on the body,
@@ -35,13 +33,13 @@ type CommandPaletteContentProps = Omit<ComponentProps<typeof Command>, "children
 
 export function CommandPaletteContent({
   children,
-  escapeLabel = "Close",
-  footerActionLabel,
+  escapeLabel: _escapeLabel,
+  footerActionLabel: _footerActionLabel,
   footerTrailing,
   inputAccessory,
   inputProps,
   panelSize = "list",
-  showBackHint,
+  showBackHint: _showBackHint,
   testId,
   ...commandProps
 }: CommandPaletteContentProps) {
@@ -63,36 +61,7 @@ export function CommandPaletteContent({
         >
           {children}
         </CommandPanel>
-        <CommandFooter className="max-sm:flex-col max-sm:items-start">
-          <div className="flex items-center gap-3">
-            <KbdGroup>
-              <Kbd>
-                <ArrowUpIcon />
-              </Kbd>
-              <Kbd>
-                <ArrowDownIcon />
-              </Kbd>
-              <span>Navigate</span>
-            </KbdGroup>
-            {footerActionLabel !== undefined ? (
-              <KbdGroup>
-                <Kbd>Enter</Kbd>
-                <span>{footerActionLabel}</span>
-              </KbdGroup>
-            ) : null}
-            {showBackHint ? (
-              <KbdGroup>
-                <Kbd>Backspace</Kbd>
-                <span>Back</span>
-              </KbdGroup>
-            ) : null}
-            <KbdGroup>
-              <Kbd>Esc</Kbd>
-              <span>{escapeLabel}</span>
-            </KbdGroup>
-          </div>
-          {footerTrailing}
-        </CommandFooter>
+        {footerTrailing ? <CommandFooter>{footerTrailing}</CommandFooter> : null}
       </Command>
     </div>
   );

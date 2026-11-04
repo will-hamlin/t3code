@@ -1,3 +1,4 @@
+import { marshalTurnText } from "@t3tools/shared/projectOrchestrators";
 import { makeAssistantStreamingFilter } from "./assistantStreaming.ts";
 import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 import {
@@ -922,14 +923,12 @@ export const layer: Layer.Layer<
           failure,
           threadDisposition: "reusable",
         });
-        const responseStreamingMode = yield* Effect.gen(function* () {
-          const responseStreamingMode = yield* serverSettings.getSettings.pipe(
-            Effect.map(
-              (settings) =>
-                resolveProjectSettings(settings, input.appThread.projectId).settings
-                  .responseStreamingMode,
-            ),
-          );
+        const prepared = yield* Effect.gen(function* () {
+          const settings = yield* serverSettings.getSettings;
+          const responseStreamingMode = resolveProjectSettings(settings, input.appThread.projectId)
+            .settings.responseStreamingMode;
+          const marshal =
+            settings.projectSettingsOverrides[input.appThread.projectId]?.marshalAgent;
           // Side chats share the parent's worktree; a snapshot would capture the parent's edits.
           yield* (
             input.appThread.lineage.sideChat === true
@@ -954,7 +953,7 @@ export const layer: Layer.Layer<
           ) {
             return null;
           }
-          return responseStreamingMode;
+          return { responseStreamingMode, marshal };
         }).pipe(
           Effect.catchCause((cause) =>
             Effect.gen(function* () {
@@ -998,9 +997,10 @@ export const layer: Layer.Layer<
               }),
           ),
         );
-        if (responseStreamingMode === null) {
+        if (prepared === null) {
           return;
         }
+        const { responseStreamingMode, marshal } = prepared;
         const terminalEvent = yield* Ref.make<ProviderTerminalEvent | null>(null);
         const latestTurnItemOrdinal = yield* Ref.make(input.providerTurnOrdinal * 100);
         const latestProviderThread = yield* Ref.make(input.providerThread);
@@ -1709,7 +1709,14 @@ export const layer: Layer.Layer<
           attemptId: input.attemptId,
           rootNodeId: input.rootNode.id,
           providerThread: input.providerThread,
-          message: input.message,
+          message: {
+            ...input.message,
+            text: marshalTurnText(
+              input.message.text,
+              marshal,
+              input.appThread.lineage.relationshipToParent === "subagent",
+            ),
+          },
           modelSelection: input.modelSelection,
           runtimePolicy: input.runtimePolicy,
           ...(appContext.length === 0 ? {} : { appContext }),

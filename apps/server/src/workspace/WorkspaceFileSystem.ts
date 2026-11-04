@@ -121,6 +121,14 @@ export class WorkspaceFileSystem extends Context.Service<
       ProjectReadFileResult,
       WorkspaceFileSystemError | WorkspacePaths.WorkspacePathOutsideRootError
     >;
+    readonly createDirectory: (
+      input: Pick<ProjectWriteFileInput, "cwd" | "relativePath">,
+    ) => Effect.Effect<
+      ProjectWriteFileResult,
+      | WorkspaceFileSystemError
+      | WorkspacePaths.WorkspacePathOutsideRootError
+      | KnownWorkspaces.UnknownWorkspaceError
+    >;
     /** Writes inside a known workspace only. */
     readonly writeFile: (
       input: ProjectWriteFileInput,
@@ -460,7 +468,7 @@ export const make = Effect.gen(function* () {
 
   // Resolve existing ancestors and reject dangling links so creation cannot follow symlinks outside root.
   const resolveWriteTarget = Effect.fn("WorkspaceFileSystem.resolveWriteTarget")(function* (
-    input: ProjectWriteFileInput,
+    input: Pick<ProjectWriteFileInput, "cwd" | "relativePath">,
   ) {
     const target = yield* workspacePaths.resolveRelativePathWithinRoot({
       workspaceRoot: input.cwd,
@@ -592,7 +600,29 @@ export const make = Effect.gen(function* () {
     return { relativePath: target.relativePath };
   });
 
-  return WorkspaceFileSystem.of({ getMetadata, readFile, writeFile });
+  const createDirectory: WorkspaceFileSystem["Service"]["createDirectory"] = Effect.fn(
+    "WorkspaceFileSystem.createDirectory",
+  )(function* (input) {
+    yield* knownWorkspaces.assertContains(input.cwd);
+    const target = yield* resolveWriteTarget(input);
+    yield* fileSystem.makeDirectory(target.realTargetPath).pipe(
+      Effect.mapError(
+        (cause) =>
+          new WorkspaceFileSystemOperationError({
+            workspaceRoot: input.cwd,
+            relativePath: input.relativePath,
+            resolvedPath: target.realTargetPath,
+            operationPath: target.realTargetPath,
+            operation: "make-directory",
+            cause,
+          }),
+      ),
+    );
+    yield* workspaceEntries.refresh(input.cwd);
+    return { relativePath: target.relativePath };
+  });
+
+  return WorkspaceFileSystem.of({ getMetadata, readFile, writeFile, createDirectory });
 });
 
 export const layer = Layer.effect(WorkspaceFileSystem, make);

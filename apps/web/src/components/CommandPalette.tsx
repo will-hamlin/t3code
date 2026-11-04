@@ -1,3 +1,4 @@
+import { useAssignProjectMarshal } from "../hooks/useProjectMarshal";
 import { threadPullRequestLinkMode } from "@t3tools/client-runtime/thread-pull-request-compatibility";
 import { visibleThreadPullRequests } from "@t3tools/shared/threadPullRequests";
 
@@ -21,7 +22,6 @@ import {
   addProjectRemoteSourceLabel,
   addProjectRemoteSourcePathHint,
   addProjectRemoteSourceProvider,
-  sortAddProjectProviderSources,
   type AddProjectRemoteSource,
   type AddProjectRemoteSourceReadiness,
 } from "@t3tools/client-runtime/operations/projects";
@@ -433,6 +433,9 @@ function OpenCommandPaletteDialog(props: {
     setHighlightedItemValue(null);
   }
   const clientSettings = useClientSettings(selectCommandPaletteClientSettings);
+  const assignMarshal = useAssignProjectMarshal();
+  const marshalAgent =
+    props.openIntent?.kind === "add-project" ? props.openIntent.marshalAgent : undefined;
   const createProject = useAtomCommand(projectEnvironment.create, {
     reportFailure: false,
   });
@@ -1022,8 +1025,7 @@ function OpenCommandPaletteDialog(props: {
     }
 
     const orderedSources: ReadonlyArray<AddProjectRemoteSource> = [
-      "url",
-      ...sortAddProjectProviderSources(readinessBySource),
+      SourceControlProviderKind.make("github"),
     ];
 
     for (const source of orderedSources) {
@@ -1807,6 +1809,8 @@ function OpenCommandPaletteDialog(props: {
       cwd,
     );
     if (existing) {
+      if (marshalAgent)
+        await assignMarshal(scopeProjectRef(existing.environmentId, existing.id), marshalAgent);
       // Adding an archived project's folder again brings the project back.
       if (existing.archivedAt != null) {
         void updateProject({
@@ -1881,6 +1885,8 @@ function OpenCommandPaletteDialog(props: {
       return;
     }
 
+    if (marshalAgent)
+      await assignMarshal(scopeProjectRef(input.environmentId, projectId), marshalAgent);
     const navigationResult = await settlePromise(() =>
       handleNewThread(scopeProjectRef(input.environmentId, projectId)),
     );
@@ -1931,6 +1937,7 @@ function OpenCommandPaletteDialog(props: {
       createNewProject({
         environmentId: newProjectFlow.environmentId,
         name: newProjectName,
+        ...(marshalAgent ? { marshalAgent } : {}),
         publishTo: newProjectPublishes ? newProjectPublishTarget : null,
       }),
     );
@@ -2114,6 +2121,11 @@ function OpenCommandPaletteDialog(props: {
       }
       return;
     }
+    if (marshalAgent)
+      await assignMarshal(
+        scopeProjectRef(addProjectCloneFlow.environmentId, projectId),
+        marshalAgent,
+      );
     setOpen(false);
     void suggestAppAccessForRemote(
       addProjectCloneFlow.environmentId,

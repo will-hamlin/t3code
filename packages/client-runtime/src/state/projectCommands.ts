@@ -207,6 +207,16 @@ export function createProjectEnvironmentAtoms<R, E>(
       scheduler: projectScheduler,
       concurrency: { mode: "serial", key: ({ environmentId }) => environmentId },
     }),
+    createDirectory: createEnvironmentRpcCommand(runtime, {
+      label: "environment-data:projects:create-directory",
+      tag: WS_METHODS.projectsCreateDirectory,
+      scheduler: fileScheduler,
+      concurrency: {
+        mode: "serial",
+        key: ({ environmentId, input }) =>
+          JSON.stringify([environmentId, input.cwd, input.relativePath]),
+      },
+    }),
     writeFile: createEnvironmentRpcCommand(runtime, {
       label: "environment-data:projects:write-file",
       tag: WS_METHODS.projectsWriteFile,

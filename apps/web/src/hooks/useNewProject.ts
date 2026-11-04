@@ -1,3 +1,4 @@
+import { useAssignProjectMarshal } from "./useProjectMarshal";
 import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import {
   getNewProjectRepository,
@@ -7,7 +8,7 @@ import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
-import type { EnvironmentId } from "@t3tools/contracts";
+import type { MarshalName, EnvironmentId } from "@t3tools/contracts";
 
 import { stackedThreadToast, toastManager } from "~/components/ui/toast";
 import { waitForProject } from "~/state/entities";
@@ -24,6 +25,7 @@ function errorMessage(error: unknown): string {
 }
 
 export function useNewProject() {
+  const assignMarshal = useAssignProjectMarshal();
   const createNew = useAtomCommand(projectEnvironment.createNew, { reportFailure: false });
   const publishRepository = useAtomCommand(sourceControlEnvironment.publishRepository, {
     reportFailure: false,
@@ -70,6 +72,7 @@ export function useNewProject() {
   return async (input: {
     readonly environmentId: EnvironmentId;
     readonly name: string;
+    readonly marshalAgent?: MarshalName;
     readonly publishTo: NewProjectPublishTarget | null;
   }): Promise<boolean> => {
     const result = await createNew({
@@ -90,6 +93,8 @@ export function useNewProject() {
     }
 
     const { projectId, workspaceRoot, commitError } = result.value;
+    if (input.marshalAgent)
+      await assignMarshal(scopeProjectRef(input.environmentId, projectId), input.marshalAgent);
     toastManager.add(
       stackedThreadToast(
         commitError === undefined

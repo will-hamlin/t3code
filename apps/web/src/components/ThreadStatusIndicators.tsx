@@ -820,7 +820,7 @@ function settledPrHoverColorClass(state: ThreadPullRequestBadge["state"]): strin
     case "merged":
       return "group-hover/sidebar-row:text-violet-600 dark:group-hover/sidebar-row:text-violet-300/90";
     case "closed":
-      return "group-hover/sidebar-row:text-red-600 dark:group-hover/sidebar-row:text-red-300/90";
+      return "group-hover/sidebar-row:text-(--oc-ginkgo) dark:group-hover/sidebar-row:text-(--oc-ginkgo)";
   }
 }
 

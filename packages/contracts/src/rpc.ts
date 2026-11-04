@@ -412,6 +412,7 @@ export const WS_METHODS = {
   projectsSearchContents: "projects.searchContents",
   projectsSearchEntries: "projects.searchEntries",
   projectsWriteFile: "projects.writeFile",
+  projectsCreateDirectory: "projects.createDirectory",
   projectsMutate: "projects.mutate",
   projectsEnsureScratch: "projects.ensureScratch",
   projectsCreateNew: "projects.createNew",
@@ -1326,6 +1327,15 @@ const WsProjectsReadFileRpc = Rpc.make(WS_METHODS.projectsReadFile, {
   error: Schema.Union([ProjectReadFileError, EnvironmentAuthorizationError]),
 });
 
+const WsProjectsCreateDirectoryRpc = Rpc.make(WS_METHODS.projectsCreateDirectory, {
+  payload: Schema.Struct({
+    cwd: ProjectWriteFileInput.fields.cwd,
+    relativePath: ProjectWriteFileInput.fields.relativePath,
+  }),
+  success: ProjectWriteFileResult,
+  error: Schema.Union([ProjectWriteFileError, EnvironmentAuthorizationError]),
+});
+
 const WsProjectsWriteFileRpc = Rpc.make(WS_METHODS.projectsWriteFile, {
   payload: ProjectWriteFileInput,
   success: ProjectWriteFileResult,
@@ -2112,6 +2122,7 @@ export const WsRpcGroup = RpcGroup.make(
   WsProjectsCreateNewRpc,
   WsProjectsCreateFromThreadRpc,
   WsProjectsWriteFileRpc,
+  WsProjectsCreateDirectoryRpc,
   WsProjectsMutateRpc,
   WsShellOpenInEditorRpc,
   WsFilesystemBrowseRpc,

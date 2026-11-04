@@ -8,17 +8,12 @@ import type {
 } from "@t3tools/contracts";
 
 import type { DraftId } from "../../composerDraftStore";
-import { useT3ProjectFileScripts } from "../../hooks/useT3ProjectFileScripts";
 import { type EnvMode, type EnvironmentOption } from "../BranchToolbar.logic";
 import { BranchToolbar } from "../BranchToolbar";
 import BaseGitActionsControl from "../GitActionsControl";
-import ProjectScriptsControl, {
-  type NewProjectScriptInput,
-  type ProjectScriptActionResult,
-} from "../ProjectScriptsControl";
+import type { NewProjectScriptInput, ProjectScriptActionResult } from "../ProjectScriptsControl";
 import { memo, useState, type ComponentProps } from "react";
 import { ThreadDetailsCard } from "./ThreadDetailsCard";
-import { OpenInPicker } from "./OpenInPicker";
 import { ThreadDetailsSection } from "./ThreadDetailsSection";
 import { ThreadAutomationsPanel } from "./ThreadAutomationsPanel";
 import { ThreadRelationshipsPanel } from "./ThreadRelationshipsControl";
@@ -89,10 +84,6 @@ interface ThreadDetailsPanelProps extends Pick<
 export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
   const visible = useClientSettings(resolveThreadDetailsVisibility);
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
-  const fileScripts = useT3ProjectFileScripts(
-    props.environmentId,
-    props.activeProjectScripts && visible.scripts ? props.gitCwd : null,
-  );
   const activeThreadRef = { environmentId: props.environmentId, threadId: props.threadId };
   const branchToolbarProps = {
     showGitControls: props.isGitRepo,
@@ -150,9 +141,6 @@ export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
       {(density) => {
         // Section flags follow the rows that will render, so no empty section steals the divider rule.
         const show = {
-          environment: density === "full" && visible.environment,
-          openIn: density !== "essential" && visible.openIn && props.showOpenInPicker,
-          scripts: visible.scripts && props.activeProjectScripts !== undefined,
           branch: props.gitCwd !== null && props.isGitRepo && visible.branch,
           git:
             props.gitCwd !== null &&
@@ -162,56 +150,6 @@ export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
         return (
           <>
             <div className="group/details-items">
-              {show.environment || show.openIn || show.scripts ? (
-                <ThreadDetailsSection
-                  headingId="thread-details-workspace-heading"
-                  title="Workspace"
-                  separated={false}
-                  showHeading={false}
-                >
-                  <div className="flex flex-col">
-                    {show.environment ? (
-                      <BranchToolbar
-                        layout="panel"
-                        panelSection="workspace"
-                        availableEnvironments={props.availableEnvironments}
-                        {...(props.onEnvironmentChange
-                          ? { onEnvironmentChange: props.onEnvironmentChange }
-                          : {})}
-                        autoEnvironmentLabel={props.autoEnvironmentLabel}
-                        onAutoEnvironment={props.onAutoEnvironment}
-                        {...branchToolbarProps}
-                      />
-                    ) : null}
-
-                    {show.openIn ? (
-                      <OpenInPicker
-                        keybindings={props.keybindings}
-                        environmentId={props.environmentId}
-                        availableEditors={props.availableEditors}
-                        openInCwd={props.gitCwd}
-                        enableShortcut={props.openInShortcutEnabled}
-                        displayMode="panel"
-                      />
-                    ) : null}
-
-                    {show.scripts && props.activeProjectScripts ? (
-                      <ProjectScriptsControl
-                        environmentId={props.environmentId}
-                        displayMode="panel"
-                        scripts={props.activeProjectScripts}
-                        fileScripts={fileScripts}
-                        preferredScriptId={props.preferredScriptId}
-                        onRunScript={props.onRunProjectScript}
-                        onAddScript={props.onAddProjectScript}
-                        onUpdateScript={props.onUpdateProjectScript}
-                        onDeleteScript={props.onDeleteProjectScript}
-                      />
-                    ) : null}
-                  </div>
-                </ThreadDetailsSection>
-              ) : null}
-
               {props.gitCwd && (show.branch || show.git) ? (
                 <ThreadDetailsSection
                   headingId="thread-details-version-control-heading"

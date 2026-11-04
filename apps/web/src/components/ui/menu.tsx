@@ -1,3 +1,4 @@
+import { DotMatrix } from "../DotMatrix";
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { CheckIcon, ChevronRightIcon, SearchIcon } from "lucide-react";
 import type * as React from "react";
@@ -29,6 +30,7 @@ function MenuPopup({
   anchor,
   keepMounted = false,
   width = "default",
+  variant = "default",
   ...props
 }: MenuPrimitive.Popup.Props & {
   align?: MenuPrimitive.Positioner.Props["align"];
@@ -39,6 +41,7 @@ function MenuPopup({
   anchor?: MenuPrimitive.Positioner.Props["anchor"];
   keepMounted?: boolean;
   width?: "default" | "content";
+  variant?: "default" | "flat";
 }) {
   return (
     <MenuPrimitive.Portal keepMounted={keepMounted}>
@@ -55,7 +58,10 @@ function MenuPopup({
       >
         <MenuPrimitive.Popup
           className={cn(
-            "dropdown-glass relative flex origin-(--transform-origin) rounded-lg shadow-[0_16px_40px_-18px_rgb(0_0_0/55%)] outline-none focus:outline-none dark:shadow-[0_18px_44px_-18px_rgb(0_0_0/80%)]",
+            "relative flex origin-(--transform-origin) outline-none focus:outline-none",
+            variant === "flat"
+              ? "rounded-xs border border-border bg-background text-foreground font-mono"
+              : "dropdown-glass rounded-lg shadow-[0_16px_40px_-18px_rgb(0_0_0/55%)] dark:shadow-[0_18px_44px_-18px_rgb(0_0_0/80%)]",
             // Electron drag hit-testing ignores z-index; opt portaled menus out to keep overlapping rows
             // hoverable.
             "[-webkit-app-region:no-drag]",
@@ -66,7 +72,10 @@ function MenuPopup({
           data-slot="menu-popup"
           {...props}
         >
-          <div className="max-h-(--available-height) w-full overflow-y-auto p-1">{children}</div>
+          <DotMatrix fade />
+          <div className="relative max-h-(--available-height) w-full overflow-y-auto p-1">
+            {children}
+          </div>
         </MenuPrimitive.Popup>
       </MenuPrimitive.Positioner>
     </MenuPrimitive.Portal>
