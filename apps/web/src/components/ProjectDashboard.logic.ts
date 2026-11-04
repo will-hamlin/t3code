@@ -100,3 +100,23 @@ export function projectThreadPriority(a: EnvironmentThreadShell, b: EnvironmentT
       PROJECT_STATUS[projectThreadStatus(b)].priority || b.updatedAt.localeCompare(a.updatedAt)
   );
 }
+
+export function threadCounts(threads: readonly EnvironmentThreadShell[]) {
+  const counts = {
+    total: threads.length,
+    completed: 0,
+    working: 0,
+    away: 0,
+    attention: 0,
+    ready: 0,
+  };
+  for (const thread of threads) {
+    const status = projectThreadStatus(thread);
+    if (status === "complete") counts.completed++;
+    else if (status === "working" || status === "waiting") counts.working++;
+    else if (status === "paused") counts.away++;
+    else if (status === "ready") counts.ready++;
+    else counts.attention++;
+  }
+  return counts;
+}

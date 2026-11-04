@@ -2047,7 +2047,7 @@ export function AboutSettingsPanel() {
           {...searchableSetting("privacy-policy")}
           description={
             telemetryOff === undefined
-              ? "How we handle your data, including the anonymous usage data efficio collects."
+              ? "How we handle your data, including the anonymous usage data ficio collects."
               : `How we handle your data. ${telemetryOff}`
           }
           control={
@@ -2062,7 +2062,7 @@ export function AboutSettingsPanel() {
         />
         <SettingsRow
           {...searchableSetting("open-source-licenses")}
-          description="Notices for dependencies, assets, and optional tools used by efficio."
+          description="Notices for dependencies, assets, and optional tools used by ficio."
           control={
             <Button
               render={<Link to="/settings/open-source-licenses" />}

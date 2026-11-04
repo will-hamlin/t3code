@@ -123,7 +123,7 @@ export function RightPanelSurfaceContent(props: {
         return (
           <PullRequestsUnavailableState
             title="Pull requests unavailable"
-            error="Update this environment's efficio server to browse pull requests."
+            error="Update this environment's ficio server to browse pull requests."
           />
         );
       }

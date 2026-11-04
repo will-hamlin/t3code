@@ -101,7 +101,7 @@ describe("buildComposerPromptHistoryEntries", () => {
     ]);
   });
 
-  it("skips messages sent by automations, agents, and efficio", () => {
+  it("skips messages sent by automations, agents, and ficio", () => {
     const typed = buildComposerPromptHistoryEntries([
       { id: "m1", role: "user", text: "typed" },
       { id: "m2", role: "user", text: "scheduled", scheduledTaskId: ScheduledTaskId.make("task") },

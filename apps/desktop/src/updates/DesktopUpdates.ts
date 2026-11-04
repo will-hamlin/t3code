@@ -1201,7 +1201,7 @@ export const make = Effect.gen(function* () {
       if (Option.isSome(channelBlockedReason(nextChannel))) {
         return yield* new DesktopUpdateChannelManagedError({
           channel: nextChannel,
-          policyMessage: policy.message ?? "Your administrator manages efficio updates.",
+          policyMessage: policy.message ?? "Your administrator manages ficio updates.",
         });
       }
       // A background check holds the updater only briefly, so wait it out instead of refusing.

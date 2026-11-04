@@ -85,8 +85,8 @@ export function CreateAssignmentDialog({
           <DialogHeader>
             <DialogTitle>New assignment</DialogTitle>
             <DialogDescription>
-              Describe what you want implemented. Choose a project and Marshal, and they’ll take it
-              from here.
+              Describe what you want implemented. Choose a project and orchestrator, and they’ll
+              take it from here.
             </DialogDescription>
           </DialogHeader>
           <DialogPanel>
@@ -119,7 +119,7 @@ export function CreateAssignmentDialog({
               </div>
               <div className="space-y-2">
                 <label htmlFor="assignment-marshal" className="text-sm">
-                  Marshal
+                  Orchestrator
                 </label>
                 <Select
                   value={selectedMarshal ?? ""}
@@ -131,11 +131,13 @@ export function CreateAssignmentDialog({
                   }}
                   disabled={busy}
                 >
-                  <SelectTrigger id="assignment-marshal" aria-label="Marshal">
+                  <SelectTrigger id="assignment-marshal" aria-label="Orchestrator">
                     <SelectValue>
                       <span className="flex items-center gap-2">
                         <MarshalIcon name={selectedMarshal} className="size-6" />
-                        {selectedMarshal ?? "All Marshals are assigned"}
+                        {selectedMarshal
+                          ? `Orchestrator ${PROJECT_ORCHESTRATORS.findIndex((entry) => entry.name === selectedMarshal) + 1}`
+                          : "All orchestrators are assigned"}
                       </span>
                     </SelectValue>
                   </SelectTrigger>
@@ -144,7 +146,8 @@ export function CreateAssignmentDialog({
                       <SelectItem key={name} value={name} disabled={occupied.has(name)}>
                         <span className="flex items-center gap-2">
                           <MarshalIcon name={name} className="size-6" />
-                          {name}
+                          Orchestrator{" "}
+                          {PROJECT_ORCHESTRATORS.findIndex((entry) => entry.name === name) + 1}
                           {occupied.has(name) ? " · Assigned" : ""}
                         </span>
                       </SelectItem>

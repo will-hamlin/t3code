@@ -218,8 +218,7 @@ export function CaptureShortcutConfig({
       ) : (
         <>
           <p className="text-muted-foreground">
-            Allow efficio to read your desktop settings. You'll review any changes here before
-            saving.
+            Allow ficio to read your desktop settings. You'll review any changes here before saving.
           </p>
           <Button
             disabled={actionBusy || !bridge}
@@ -239,7 +238,7 @@ export function CaptureShortcutConfig({
         <p role="status" className="text-muted-foreground">
           {state.shortcutPending
             ? "Connecting to your desktop…"
-            : "Restart efficio to finish connecting your shortcut."}
+            : "Restart ficio to finish connecting your shortcut."}
         </p>
       ) : null}
       <details className="text-xs text-muted-foreground">
@@ -258,7 +257,7 @@ export function CaptureShortcutConfig({
                 state.shortcutConfigPath ??
                 (niri ? "~/.config/niri/config.kdl" : "~/.config/hypr/hyprland.conf")}
             </p>
-            {niri ? <p>efficio also reads any files included by this file.</p> : null}
+            {niri ? <p>ficio also reads any files included by this file.</p> : null}
             {preview && preview.resolvedPath !== preview.path ? (
               <p className="break-all">Linked to {preview.resolvedPath}. The link will be kept.</p>
             ) : null}
@@ -319,8 +318,8 @@ export function CaptureShortcutConfig({
             {isCopied ? "Copied" : "Copy shortcut"}
           </Button>
           <p>
-            Turn capture off in efficio to stop it. Remove the shortcut from {desktop} to free up
-            the keys.
+            Turn capture off in ficio to stop it. Remove the shortcut from {desktop} to free up the
+            keys.
           </p>
           {state.shortcutActionRegistered === false ? (
             <p role="status">{state.shortcutMessage}</p>

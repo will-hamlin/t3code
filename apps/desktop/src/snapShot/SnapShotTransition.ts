@@ -114,7 +114,7 @@ function createWindow(
     resizable: false,
     show: false,
     skipTaskbar: true,
-    title: "efficio Snapshot Animation",
+    title: "ficio Snapshot Animation",
     transparent: true,
     webPreferences: {
       backgroundThrottling: false,

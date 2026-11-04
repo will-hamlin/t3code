@@ -1137,6 +1137,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
   const diff = latestRunDiff(thread);
   // Only the trailing icons would remain, so the row moves them to the title line instead.
   const metaLineEmpty =
+    !props.projectDisplayName &&
     !thread.branch &&
     !showsScratchMachine &&
     prBadge === null &&
@@ -1144,6 +1145,11 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
     runningTerminalIds.length === 0;
   const metaLine = metaLineEmpty ? null : (
     <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-secondary-label text-xs">
+      {props.projectDisplayName ? (
+        <span className="max-w-28 truncate" aria-label={props.projectDisplayName}>
+          {props.projectDisplayName}
+        </span>
+      ) : null}
       {thread.branch ? (
         <>
           <ThreadWorktreeIndicator thread={thread} />

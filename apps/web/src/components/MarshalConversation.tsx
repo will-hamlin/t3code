@@ -24,7 +24,7 @@ export function MarshalBriefing({ thread, cwd }: { thread: EnvironmentThreadShel
     <ChatMarkdown text={reply.text} cwd={cwd} environmentId={thread.environmentId} />
   ) : (
     <p className="text-sm text-muted-foreground">
-      The Marshal’s final briefing will appear here after verification.
+      The orchestrator’s final briefing will appear here after verification.
     </p>
   );
 }
@@ -81,7 +81,7 @@ export function MarshalConversation({
       });
       if (result._tag === "Failure") throw squashAtomCommandFailure(result);
       setMessage("");
-      setNotice(running ? "Direction sent to the Marshal." : "Message sent.");
+      setNotice(running ? "Direction sent to the orchestrator." : "Message sent.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not send the message.");
     } finally {

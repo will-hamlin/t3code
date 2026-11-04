@@ -393,7 +393,7 @@ export function DraftHeroHeadline({
             />
           }
         >
-          or start without a project
+          Without a project
         </TooltipTrigger>
         {noProjectShortcut ? <TooltipPopup side="bottom">{noProjectShortcut}</TooltipPopup> : null}
       </Tooltip>
@@ -418,17 +418,17 @@ export function DraftHeroHeadline({
       ) : (
         <h1 className="w-full text-center font-normal text-2xl text-foreground tracking-tight sm:text-3xl">
           {isScratchDraft ? (
-            <>What should we work on?</>
+            <>{projectSelector}</>
           ) : canChooseProject ? (
-            <>{projectSelector} to start</>
+            <>{projectSelector}</>
           ) : (
-            <>Add a project to start</>
+            <>Add a project</>
           )}
         </h1>
       )}
-      {scratchWorkspaceRoot === null ? null : (
+      {scratchWorkspaceRoot === null || isScratchDraft ? null : (
         <p className="mt-2 flex h-6 w-full items-center justify-center text-sm">
-          {isScratchDraft ? projectSelector : orStartWithoutProject}
+          {orStartWithoutProject}
         </p>
       )}
     </div>

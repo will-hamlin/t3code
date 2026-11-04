@@ -150,7 +150,7 @@ export function installChatRouteCommands(router: AnyRouter): () => void {
             stackedThreadToast({
               type: "info",
               title: "Preview is desktop-only",
-              description: "Open efficio in the desktop app to use the in-app preview.",
+              description: "Open ficio in the desktop app to use the in-app preview.",
             }),
           );
           return;

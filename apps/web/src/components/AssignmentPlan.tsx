@@ -58,9 +58,7 @@ export function AssignmentPlan({
       <div className="flex items-center gap-4">
         <MarshalIcon name={assignment.marshalAgent} className="size-20" />
         <div className="min-w-0">
-          <p className="mb-1 font-mono text-xs text-muted-foreground">
-            Marshal {assignment.marshalAgent}
-          </p>
+          <p className="mb-1 font-mono text-xs text-muted-foreground">Orchestrator</p>
           <h3 className="text-xl">
             <Link
               data-project-card-open=""
@@ -73,8 +71,8 @@ export function AssignmentPlan({
           </h3>
           <p className="mt-2 font-mono text-2xs text-muted-foreground">
             {assignment.status === "completed"
-              ? "Assignment complete · Marshal available"
-              : "Marshal reserved for this assignment"}
+              ? "Assignment complete · Orchestrator available"
+              : "Orchestrator reserved for this assignment"}
           </p>
         </div>
       </div>
@@ -82,7 +80,7 @@ export function AssignmentPlan({
         aria-label="Assignment progress"
         className="my-6 flex gap-3 border-y border-border py-4 text-xs"
       >
-        {["Request received", "Marshal working", "Report back"].map((label, index) => (
+        {["Request received", "Orchestrator working", "Report back"].map((label, index) => (
           <li
             key={label}
             className={
@@ -145,18 +143,13 @@ export function AssignmentPlan({
               </ol>
             ) : (
               <p className="mt-5 text-sm text-muted-foreground">
-                The Marshal will publish milestones when execution begins.
+                The orchestrator will publish milestones when execution begins.
               </p>
             )}
           </>
         )}
       </section>
-      <MarshalConversation
-        thread={thread}
-        marshal={assignment.marshalAgent}
-        cwd={cwd}
-        running={running}
-      />
+      <MarshalConversation thread={thread} marshal="Orchestrator" cwd={cwd} running={running} />
       {assignment.brief ? (
         <div className="mt-5 flex justify-end">
           <Button

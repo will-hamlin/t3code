@@ -1,4 +1,20 @@
-# efficio
+# ficio
+
+A customized desktop and web interface for coding agents, forked from [T3 Code](https://github.com/pingdotgg/t3code).
+
+## Download for Windows
+
+**[Download ficio for Windows x64 (.exe)](https://github.com/will-hamlin/t3code/releases/download/ficio-v0.1.6-preview.20261104.9/ficio-0.1.6-preview.20261104.9-x64.exe)**
+
+[Release notes and SHA-256 checksum](https://github.com/will-hamlin/t3code/releases/tag/ficio-v0.1.6-preview.20261104.9) · [All releases](https://github.com/will-hamlin/t3code/releases)
+
+This is a preview build for Intel/AMD Windows laptops, including x64 ThinkPads. The installer is not code-signed. It includes the ficio interface and Overcast eagle app icon.
+
+For a laptop connected to a desktop host, pair with the desktop's remote environment and select it before starting a thread. Agent execution and project files stay on that host. Install and authenticate providers on the host, not on the laptop, for this workflow.
+
+## Upstream documentation
+
+The documentation below describes the upstream project. Its package-manager commands and upstream download links do not install this customized ficio build; use the Windows download above.
 
 efficio is an "agent harness control surface". It enables control of the agents on your machine with a best-in-class mobile app ([iOS](https://apps.apple.com/us/app/t3-code-remote-claude-more/id6787819824), [Android](https://play.google.com/store/apps/details?id=com.t3tools.t3code)), [web app](https://app.t3.codes) and [Electron-based desktop app](https://t3.codes).
 

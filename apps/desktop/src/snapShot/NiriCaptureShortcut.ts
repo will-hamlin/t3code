@@ -54,7 +54,7 @@ export async function startNiriCaptureShortcut(
       }),
     ]);
     if (result !== RequestNameReply.PRIMARY_OWNER)
-      throw new Error("Another efficio instance already owns the capture shortcut.");
+      throw new Error("Another ficio instance already owns the capture shortcut.");
     return close;
   } catch (error) {
     close();

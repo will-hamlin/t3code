@@ -1,302 +1,147 @@
 import "../styles/overcast-dashboard.css";
-import { useState } from "react";
-import { useNavigate, Link } from "@tanstack/react-router";
-import { EllipsisIcon, PlusIcon, SettingsIcon, FolderIcon, ArrowUpRightIcon } from "lucide-react";
-import { useAssignments } from "../hooks/useAssignments";
+import { useEffect, useState } from "react";
+import { FolderTreeIcon } from "lucide-react";
+import { scopeProjectRef } from "@t3tools/client-runtime/environment";
+import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
+import type { DraftId } from "../composerDraftStore";
 import { useSidebarProjectGroups } from "../hooks/useSidebarProjectGroups";
-import { useConnectedEnvironmentIds } from "../state/environments";
+import { useNewThreadHandler } from "../hooks/useHandleNewThread";
+import { useStableCallback } from "../hooks/useStableCallback";
+import { useProjects } from "../state/entities";
 import { openCommandPalette } from "../commandPaletteBus";
 import { isElectron } from "../env";
-import { PROJECT_STATUS, projectThreadStatus } from "./ProjectDashboard.logic";
-import { MarshalIcon } from "./MarshalIcon";
-import { T3AppIcon } from "./T3AppIcon";
-import { ProjectOperations } from "./ProjectOperations";
-import { displayText } from "../lib/displayText";
-import { CreateAssignmentDialog } from "./CreateAssignmentDialog";
 import { Button } from "./ui/button";
-import { Menu, MenuTrigger, MenuPopup, MenuItem } from "./ui/menu";
 import { WorkspacePageHeader } from "./WorkspacePageHeader";
 
-export function ProjectDashboard() {
-  const [tab, setTab] = useState<"assignments" | "projects" | "ops">("assignments");
-  const [createOpen, setCreateOpen] = useState(false);
-  const assignments = useAssignments();
+import ChatView from "./ChatView";
+import { ProjectFolderTree } from "./ProjectFolderTree";
+
+export function ProjectDashboard({ projectKey }: { projectKey?: string }) {
   const groups = useSidebarProjectGroups();
-  const connected = useConnectedEnvironmentIds();
-  const navigate = useNavigate();
-  const working = assignments.filter(
-    ({ thread }) => projectThreadStatus(thread) === "working",
-  ).length;
-  const attention = assignments.filter(({ thread }) =>
-    ["approval", "request", "input", "failed", "limited"].includes(projectThreadStatus(thread)),
-  ).length;
-  const groupFor = (environmentId: string, projectId: string) =>
-    groups.find((group) =>
-      group.memberProjects.some(
-        (project) => project.environmentId === environmentId && project.id === projectId,
-      ),
-    );
+  const group = groups.find((entry) => entry.projectKey === projectKey);
+  const projects = useProjects().filter(
+    (project) =>
+      project.archivedAt === null &&
+      (!projectKey ||
+        group?.memberProjects.some(
+          (member) => member.id === project.id && member.environmentId === project.environmentId,
+        )),
+  );
+  const [selection, setSelection] = useState("");
+  const project =
+    projects.find((entry) => `${entry.environmentId}:${entry.id}` === selection) ?? projects[0];
+  const key = project ? `${project.environmentId}:${project.id}` : "";
+  const [draft, setDraft] = useState<{
+    key: string;
+    draftId: DraftId;
+    threadId: ThreadId;
+    environmentId: EnvironmentId;
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [files, setFiles] = useState(false);
+  const createDraft = useStableCallback(useNewThreadHandler());
+  const environmentId = project?.environmentId;
+  const projectId = project?.id;
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- prepares the native draft store for the selected dashboard workspace and preserves drafts across project switches
+  useEffect(() => {
+    if (!environmentId || !projectId) return;
+    let active = true;
+    void createDraft(scopeProjectRef(environmentId, projectId), { navigate: false })
+      .then((result) => {
+        if (active && result) {
+          setError(null);
+          setDraft({ ...result, key, environmentId });
+        }
+      })
+      .catch((cause: unknown) => {
+        if (active)
+          setError(cause instanceof Error ? cause.message : "Unable to open a chat draft.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [createDraft, environmentId, projectId, key]);
   return (
     <main
       data-overcast-dashboard=""
-      className="relative flex h-dvh min-h-0 w-full min-w-0 flex-1 flex-col overflow-y-auto bg-background text-foreground scrollbar-gutter-both"
+      className="scrollbar-gutter-both flex h-dvh min-w-0 flex-1 flex-col overflow-y-auto bg-background"
     >
-      <WorkspacePageHeader electron={isElectron}>
-        <span className="mr-6 inline-flex items-center gap-2 font-mono text-xs tracking-widest">
-          <T3AppIcon className="size-6" />
-          efficio
-        </span>
-        <nav
-          role="tablist"
-          aria-label="Workspace views"
-          className="flex h-full items-center gap-1 [-webkit-app-region:no-drag]"
+      <WorkspacePageHeader electron={isElectron} className="relative">
+        <h1
+          aria-current="page"
+          className="absolute left-1/2 max-w-[60%] -translate-x-1/2 truncate text-sm font-medium"
         >
-          {(["assignments", "projects", "ops"] as const).map((name) => (
-            <button
-              key={name}
-              id={`tab-${name}`}
-              role="tab"
-              type="button"
-              aria-selected={tab === name}
-              aria-controls="workspace-tab-panel"
-              className={`relative px-4 py-3 text-xs capitalize transition-colors focus-visible:outline-ring ${tab === name ? "text-foreground after:absolute after:inset-x-4 after:bottom-0 after:h-0.5 after:bg-(--oc-ginkgo)" : "text-muted-foreground hover:text-foreground"}`}
-              onClick={() => setTab(name)}
-            >
-              {name}
-            </button>
-          ))}
-        </nav>
-        <div className="ml-auto [-webkit-app-region:no-drag]">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Settings"
-            onClick={() => void navigate({ to: "/settings/general" })}
-          >
-            <SettingsIcon />
-          </Button>
-        </div>
+          {projectKey ? (group?.displayName ?? "Project") : "Home"}
+        </h1>
       </WorkspacePageHeader>
-      <div
-        id="workspace-tab-panel"
-        role="tabpanel"
-        aria-labelledby={`tab-${tab}`}
-        className="mx-auto w-full max-w-[1180px] px-6 py-10 sm:px-10 sm:py-14"
-      >
-        <div className="flex flex-wrap items-end justify-between gap-5">
-          <div>
-            <p className="mb-3 font-mono text-2xs uppercase tracking-widest text-(--oc-ginkgo)">
-              {tab === "assignments"
-                ? "Marshal command"
-                : tab === "projects"
-                  ? "Your working areas"
-                  : "Operations"}
-            </p>
-            <h1 className="text-4xl font-light tracking-tight sm:text-5xl">
-              {tab === "assignments" ? "Assignments" : tab === "projects" ? "Projects" : "Ops"}
-            </h1>
-            <p className="mt-3 text-sm text-muted-foreground">
-              {tab === "assignments"
-                ? "Make a request. Your Marshal gets it done."
-                : tab === "projects"
-                  ? "Workspaces and shared context for your assignments."
-                  : "Services, deployments, and operational status for each project."}
-            </p>
-          </div>
+      {projectKey && project ? (
+        <div className="flex shrink-0 justify-end border-b border-border px-4 py-2">
           <Button
-            onClick={() =>
-              tab !== "assignments"
-                ? openCommandPalette({ open: "add-project" })
-                : setCreateOpen(true)
-            }
+            size="sm"
+            variant="ghost"
+            aria-expanded={files}
+            aria-controls="project-files-panel"
+            onClick={() => setFiles(!files)}
           >
-            <PlusIcon />
-            {tab === "assignments" ? "New assignment" : "Add project"}
+            <FolderTreeIcon className="size-4" />
+            {files ? "Hide files" : "Project files"}
           </Button>
         </div>
-        <div className="mt-8 flex flex-wrap gap-x-8 gap-y-3 border-y border-border py-4 font-mono text-xs text-muted-foreground">
-          {tab === "ops" ? (
-            <>
-              <span>{groups.length} projects</span>
-              <span>{connected.length} machines connected</span>
-              <span>Deployment status &amp; services</span>
-            </>
-          ) : (
-            <>
-              <span>
-                <strong className="font-normal text-foreground">{assignments.length}</strong>{" "}
-                assignments
-              </span>
-              <span>
-                <strong className="font-normal text-foreground">{groups.length}</strong> projects
-              </span>
-              <span>
-                <strong className="font-normal text-(--oc-ginkgo)">{working}</strong> working
-              </span>
-              <span>
-                <strong className="font-normal text-(--oc-file-relevant)">{attention}</strong> need
-                attention
-              </span>
-            </>
-          )}
+      ) : null}
+      {projectKey && files && project ? (
+        <div id="project-files-panel">
+          <ProjectFolderTree
+            key={key}
+            environmentId={project.environmentId}
+            cwd={project.workspaceRoot}
+          />
         </div>
-        {tab === "assignments" ? (
-          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {assignments.map((assignment) => {
-              const { thread, project, marshalAgent } = assignment;
-              const status = projectThreadStatus(thread);
-              const group = groupFor(project.environmentId, project.id);
-              return (
-                <article
-                  key={`${thread.environmentId}:${thread.id}`}
-                  className="group relative flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-(--oc-collar)"
+      ) : null}
+      <div className="relative flex min-h-[480px] flex-1 flex-col [&>div]:!h-full [&>div]:min-h-[480px]">
+        {draft?.key === key ? (
+          <ChatView
+            key={draft.draftId}
+            routeKind="draft"
+            environmentId={draft.environmentId}
+            threadId={draft.threadId}
+            draftId={draft.draftId}
+            composerProjectSelector={
+              <label className="flex max-w-full items-center gap-2 text-xs text-muted-foreground">
+                In
+                <select
+                  aria-label="Chat project"
+                  value={key}
+                  onChange={(event) => setSelection(event.target.value)}
+                  className="max-w-[min(15rem,60vw)] rounded-md border border-border bg-background px-3 py-2 text-foreground"
                 >
-                  <div className="flex items-start justify-between gap-3 px-5 pt-5">
-                    <div className="flex items-center gap-3">
-                      <span className="flex size-11 items-center justify-center">
-                        <MarshalIcon name={marshalAgent} className="size-9" />
-                      </span>
-                      <div>
-                        <p className="font-mono text-xs">{marshalAgent}</p>
-                        <p className="mt-1 max-w-40 truncate text-xs text-muted-foreground">
-                          {project.title}
-                        </p>
-                      </div>
-                    </div>
-                    <Menu>
-                      <MenuTrigger
-                        render={
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            aria-label={`Manage assignment: ${displayText(assignment.title)}`}
-                          />
-                        }
-                      >
-                        <EllipsisIcon />
-                      </MenuTrigger>
-                      <MenuPopup align="end">
-                        <MenuItem
-                          onClick={() => {
-                            if (group)
-                              void navigate({
-                                to: "/project/$projectKey",
-                                params: { projectKey: group.projectKey },
-                              });
-                          }}
-                        >
-                          Project overview
-                        </MenuItem>
-                        <MenuItem
-                          onClick={() => {
-                            if (group)
-                              void navigate({
-                                to: "/settings/projects",
-                                search: { project: group.projectKey },
-                              });
-                          }}
-                        >
-                          Manage project
-                        </MenuItem>
-                      </MenuPopup>
-                    </Menu>
-                  </div>
-                  <Link
-                    to="/$environmentId/$threadId"
-                    params={{ environmentId: thread.environmentId, threadId: thread.id }}
-                    data-project-card-open=""
-                    className="flex flex-1 flex-col px-5 pb-5 pt-5 focus-visible:outline-ring"
-                  >
-                    <h2 className="line-clamp-2 text-xl leading-snug group-hover:text-(--oc-project-link)">
-                      {displayText(assignment.title)}
-                    </h2>
-                    <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-relaxed text-muted-foreground">
-                      {displayText(assignment.brief) ||
-                        "Continue the conversation and review your Marshal’s work."}
-                    </p>
-                    <div className="mt-6 flex items-center gap-2 border-t border-border pt-4 font-mono text-2xs text-muted-foreground">
-                      <span
-                        className={`size-1.5 rounded-full ${thread.interactionMode === "plan" && thread.hasActionableProposedPlan ? "bg-(--oc-ginkgo)" : PROJECT_STATUS[status].color}`}
-                      />
-                      <span>
-                        {assignment.status === "completed"
-                          ? "Complete"
-                          : thread.interactionMode === "plan" && thread.hasActionableProposedPlan
-                            ? "Plan ready for review"
-                            : status === "complete"
-                              ? "Ready to close"
-                              : PROJECT_STATUS[status].label}
-                      </span>
-                      <ArrowUpRightIcon className="ml-auto size-3.5" />
-                    </div>
-                  </Link>
-                </article>
-              );
-            })}
-          </div>
-        ) : null}
-        {tab === "projects" ? (
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {groups.map((group) => {
-              const count = assignments.filter((assignment) =>
-                group.memberProjects.some(
-                  (project) =>
-                    project.environmentId === assignment.project.environmentId &&
-                    project.id === assignment.project.id,
-                ),
-              ).length;
-              return (
-                <Link
-                  key={group.projectKey}
-                  to="/project/$projectKey"
-                  params={{ projectKey: group.projectKey }}
-                  className="group min-w-0 rounded-xl border border-border bg-card p-6 hover:border-(--oc-collar) focus-visible:outline-ring"
-                >
-                  <FolderIcon className="mb-6 size-6 text-muted-foreground" />
-                  <h2 className="text-xl group-hover:text-(--oc-project-link)">
-                    {group.displayName}
-                  </h2>
-                  <p className="mt-3 line-clamp-2 break-all font-mono text-2xs leading-relaxed text-muted-foreground">
-                    Shared workspace context
-                  </p>
-                  <div className="mt-6 flex items-center justify-between border-t border-border pt-4 font-mono text-2xs text-muted-foreground">
-                    <span>
-                      {count} {count === 1 ? "assignment" : "assignments"}
-                    </span>
-                    <ArrowUpRightIcon className="size-3.5" />
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        ) : null}
-        {tab === "ops" ? (
-          <div className="mt-8 space-y-6">
-            {groups.map((group) => (
-              <ProjectOperations key={group.projectKey} group={group} />
-            ))}
-          </div>
-        ) : null}
-        {tab === "assignments" && !assignments.length ? (
-          <div className="mt-8 rounded-xl border border-dashed border-border py-16 text-center">
-            <h2 className="text-xl">Give your next task a Marshal</h2>
+                  {!projects.length ? <option value="">No project available</option> : null}
+                  {projects.map((entry) => (
+                    <option
+                      key={`${entry.environmentId}:${entry.id}`}
+                      value={`${entry.environmentId}:${entry.id}`}
+                    >
+                      {entry.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            }
+            forceExpandedMobileComposer
+          />
+        ) : (
+          <div className="m-auto flex flex-col items-center gap-4 p-10 text-center">
             <p className="mt-3 text-sm text-muted-foreground">
-              Choose a project and describe the outcome. Review a plan before work begins.
+              {error ??
+                (project ? "Opening your composer…" : "Add a project to start a conversation.")}
             </p>
+            {!project ? (
+              <Button size="sm" onClick={() => openCommandPalette({ open: "add-project" })}>
+                Add project
+              </Button>
+            ) : null}
           </div>
-        ) : null}
-        {tab === "projects" && !groups.length ? (
-          <p className="mt-8 text-sm text-muted-foreground">
-            Add a project to set up your working area.
-          </p>
-        ) : null}
-        {tab === "ops" ? (
-          <p className="mt-6 font-mono text-2xs text-muted-foreground">
-            {connected.length} machines connected
-          </p>
-        ) : null}
+        )}
       </div>
-      <CreateAssignmentDialog open={createOpen} onOpenChange={setCreateOpen} />
     </main>
   );
 }

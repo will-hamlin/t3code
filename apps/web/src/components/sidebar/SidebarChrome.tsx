@@ -17,7 +17,6 @@ import {
 } from "../../navigationHistory";
 import { primaryServerKeybindingsAtom } from "../../state/server";
 import { cn } from "../../lib/utils";
-import { T3Wordmark } from "../T3Wordmark";
 import {
   resolveEnvironmentIdentificationPillLabel,
   resolveSidebarStageBackdropVariant,
@@ -63,6 +62,11 @@ export const SidebarChromeHeader = memo(function SidebarChromeHeader({
       )}
     >
       <DotMatrix fade />
+      <img
+        src="/efficio.svg?v=overcast-eagle"
+        alt="ficio"
+        className="relative z-10 ml-3 size-6 shrink-0"
+      />
       <div className="relative z-10 flex h-8 min-w-0 flex-1 flex-wrap content-start items-center gap-x-2 overflow-hidden py-0.5">
         <div className="flex shrink-0 items-center gap-1">
           {isElectron ? (
@@ -156,14 +160,13 @@ function HistoryNavigationButton({
 function SidebarBrandMark({ onBackdrop }: { onBackdrop: boolean }) {
   return (
     <span className="inline-flex min-w-0 items-baseline gap-1 text-sm font-medium tracking-tight">
-      <T3Wordmark aria-label="T3" className="h-[1cap] w-auto shrink-0" />
       <span
         className={cn(
           "truncate [text-box:trim-both_cap_alphabetic] supports-[text-box:trim-both_cap_alphabetic]:py-1",
           onBackdrop ? "text-white/70" : "text-muted-foreground",
         )}
       >
-        Code
+        ficio
       </span>
     </span>
   );
@@ -179,12 +182,13 @@ function SidebarUtilityItem({
   onClick: () => void;
 }) {
   return (
-    <SidebarMenuItem className="shrink-0">
+    <SidebarMenuItem className="min-w-0 flex-1">
       <Tooltip>
         <TooltipTrigger
           render={
-            <SidebarMenuButton aria-label={label} onClick={onClick} size="icon">
+            <SidebarMenuButton aria-label={label} onClick={onClick}>
               {icon}
+              <span>{label}</span>
             </SidebarMenuButton>
           }
         />

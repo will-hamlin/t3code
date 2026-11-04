@@ -10,15 +10,15 @@ describe("Marshal prompt delivery", () => {
   it("gives all seven Marshals the same workflow policy and preserves the request", () => {
     for (const name of MARSHAL_NAMES) {
       const text = marshalTurnText("Build a calculator. Do not publish it.", name, false);
-      expect(text).toContain(`You are Marshal ${name}`);
+      expect(text).toContain(`You are Orchestrator ${name}`);
       expect(text).toContain(ORCHESTRATOR_BASE_INSTRUCTIONS);
       expect(text.endsWith("Build a calculator. Do not publish it.")).toBe(true);
     }
   });
   it("keeps delegated agents in their assigned scope", () => {
     const text = marshalTurnText("Review accessibility", "Davout", true);
-    expect(text).toContain("delegated agent working for Marshal Davout");
-    expect(text).not.toContain("You are Marshal Davout");
+    expect(text).toContain("delegated agent working for Orchestrator Davout");
+    expect(text).not.toContain("You are Orchestrator Davout");
   });
   it("bounds rehydrated memory and isolates child context", () => {
     const assignment = {

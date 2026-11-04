@@ -1,3 +1,4 @@
+import { SidebarProjects } from "./sidebar/SidebarProjects";
 import { SidebarWorkspaceSlots } from "./sidebar/SidebarWorkspace";
 import { CreateProjectFolderButton } from "./sidebar/CreateProjectFolderButton";
 import { liveShellEnvironmentIdsAtom } from "../state/shell";
@@ -255,7 +256,11 @@ import {
 } from "./ui/combobox";
 import { SidebarContent, SidebarGroup, useSidebar } from "./ui/sidebar";
 import { SidebarChromeFooter, SidebarChromeHeader } from "./sidebar/SidebarChrome";
-import { SidebarHeaderIconButton, SidebarThreadHeader } from "./sidebar/SidebarThreadHeader";
+import {
+  SidebarHeaderIconButton,
+  SidebarHomeNavigation,
+  SidebarThreadHeader,
+} from "./sidebar/SidebarThreadHeader";
 import { TooltipProvider } from "./ui/tooltip";
 import { composerDraftHasUserContent, DraftId, useComposerDraftStore } from "../composerDraftStore";
 import { useThreadRouteTarget } from "../hooks/useThreadRouteTarget";
@@ -3001,6 +3006,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     <>
       <ThreadContextDragGhost />
       <SidebarChromeHeader isElectron={isElectron} />
+      <SidebarHomeNavigation />
+      <SidebarProjects />
       <SidebarContent
         ref={sidebarContentRef}
         className="min-h-full"

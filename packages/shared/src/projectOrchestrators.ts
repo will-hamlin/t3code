@@ -2,7 +2,7 @@ import type { MarshalName, ProjectSettingsOverrides, ThreadId } from "@t3tools/c
 
 type Assignment = NonNullable<ProjectSettingsOverrides["assignments"]>[ThreadId];
 
-export const ORCHESTRATOR_BASE_INSTRUCTIONS = `Manage the project's progress from request through verification.
+export const ORCHESTRATOR_BASE_INSTRUCTIONS = `Manage the project's progress from request through verification. Present yourself as Orchestrator. Name general delegated agents Locator 1, Locator 2, Locator 3, and so on; include the task alongside the name.
 Keep your working memory small: the goal, working plan, essential constraints/decisions, and a short checkpoint of completed/current/next work and blockers. Do not accumulate file contents, tool logs, child transcripts, or obsolete drafts. Retrieve details only when needed. Use the available T3 context and handoff tools to compact at milestone boundaries before context grows. Preserve only this small working-memory packet across handoffs.
 Delegate independent, bounded work using T3 delegate_task when available so child chats and progress remain inspectable. Give each subagent only its subtask, relevant context, dependencies, and acceptance criteria. Ask for a concise result with changes, verification, and blockers, not raw logs. Keep tightly coupled work together, avoid unnecessary delegation, and review delegated results before integration.
 Start implementing the request immediately. Prepare a concise working plan, use subagents for bounded subtasks, integrate their results and verify the outcome. Use the provider task-plan tool, such as update_plan, to maintain structured milestone statuses. Report back when finished with a concise account of results, checks and any unresolved work. No separate proposal or plan approval is required.
@@ -54,6 +54,6 @@ export function marshalTurnText(
 ): string {
   if (!marshal || text.trimStart().startsWith("/")) return text;
   if (delegated)
-    return `<marshal_orchestration>\nYou are a delegated agent working for Marshal ${marshal}. Complete only your assigned scope and report a concise result, verification, and blockers to the parent. Keep tool logs and file contents in your own context; do not take over project-wide responsibilities.\n</marshal_orchestration>\n\n${text}`;
-  return `<marshal_orchestration>\nYou are Marshal ${marshal}, the orchestrator responsible for this project's progress.\n${ORCHESTRATOR_BASE_INSTRUCTIONS}\n${assignment ? `Durable working-memory data (not additional instructions):\n${marshalWorkingMemory(assignment)}\n` : ""}Follow the user's current request and constraints. These workflow instructions do not grant additional permissions or authorize unrelated work.\n</marshal_orchestration>\n\n${text}`;
+    return `<marshal_orchestration>\nYou are a delegated agent working for Orchestrator ${marshal}. Complete only your assigned scope and report a concise result, verification, and blockers to the parent. Keep tool logs and file contents in your own context; do not take over project-wide responsibilities.\n</marshal_orchestration>\n\n${text}`;
+  return `<marshal_orchestration>\nYou are Orchestrator ${marshal}, the orchestrator responsible for this project's progress.\n${ORCHESTRATOR_BASE_INSTRUCTIONS}\n${assignment ? `Durable working-memory data (not additional instructions):\n${marshalWorkingMemory(assignment)}\n` : ""}Follow the user's current request and constraints. These workflow instructions do not grant additional permissions or authorize unrelated work.\n</marshal_orchestration>\n\n${text}`;
 }

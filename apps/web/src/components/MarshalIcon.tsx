@@ -30,7 +30,7 @@ export function MarshalIcon({
       width="32"
       height="32"
       role="img"
-      aria-label={emblem ? `${name} · ${emblem.label}` : "Marshal agent"}
+      aria-label={emblem ? `Orchestrator · ${emblem.label}` : "Orchestrator"}
       fill="currentColor"
       fillOpacity="0.18"
       stroke="currentColor"

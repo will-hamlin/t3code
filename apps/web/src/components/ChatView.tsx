@@ -116,7 +116,15 @@ import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 import { resolveThreadReferenceCopyTarget } from "@t3tools/client-runtime/thread-reference";
 import { resolveTerminalSessionLabel } from "@t3tools/shared/terminalLabels";
 import { useAtomValue } from "@effect/atom-react";
-import { type SetStateAction, use, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  type ReactNode,
+  type SetStateAction,
+  use,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { BackgroundThreadContext } from "./chat/backgroundThread";
 import { WorkspaceMutationIdContext } from "./chat/ChatMarkdownMedia";
 import { useLocation, useNavigate } from "@tanstack/react-router";
@@ -415,6 +423,7 @@ type ChatViewProps =
       embedded?: never;
       routeKind: "draft";
       draftId: DraftId;
+      composerProjectSelector?: ReactNode;
     };
 
 const DismissedFallbackWindowSchema = Schema.NullOr(Schema.String);
@@ -433,6 +442,7 @@ export default function ChatView(props: ChatViewProps) {
   const canOperateThread = useEnvironmentScope(environmentId, AuthOrchestrationOperateScope);
   const canOperateTerminal = useEnvironmentScope(environmentId, AuthTerminalOperateScope);
   const draftId = routeKind === "draft" ? props.draftId : null;
+  const composerProjectSelector = routeKind === "draft" ? props.composerProjectSelector : undefined;
   const handleNewThread = useNewThreadHandler();
   const routeThreadRef = scopeThreadRef(environmentId, threadId);
   const routeThreadKey = scopedThreadKey(routeThreadRef);
@@ -2791,7 +2801,7 @@ export default function ChatView(props: ChatViewProps) {
         : serverConfig === null
           ? "Side chats are not ready yet. Try again in a moment."
           : serverConfig.environment.capabilities.sideChats !== true
-            ? "Update this environment's efficio server to use side chats."
+            ? "Update this environment's ficio server to use side chats."
             : sideChatsOffered && !isServerThread
               ? "Side chats start after the first message."
               : sideChat.available &&
@@ -3543,7 +3553,11 @@ export default function ChatView(props: ChatViewProps) {
                   data-chat-composer-stack="true"
                   className="group/composer-stack pointer-events-auto relative z-10 mx-auto w-full max-w-(--chat-content-max-width)"
                 >
-                  {isDraftHeroState ? (
+                  {isDraftHeroState && composerProjectSelector ? (
+                    <div className="absolute inset-x-0 bottom-full flex justify-start px-3 pb-2">
+                      {composerProjectSelector}
+                    </div>
+                  ) : isDraftHeroState ? (
                     <div className="absolute inset-x-0 bottom-full">
                       <div
                         className="pb-4 group-has-data-[composer-shoulder-tab]/composer-stack:pb-0"
@@ -4058,7 +4072,7 @@ export default function ChatView(props: ChatViewProps) {
         </ChatRightPanel>
       ) : null}
 
-      {!embedded && !isMobileViewport && !rightPanelOpen ? (
+      {routeKind === "server" && !embedded && !isMobileViewport && !rightPanelOpen ? (
         <div
           aria-label="Workspace activity"
           className="pointer-events-none absolute top-[calc(var(--workspace-topbar-height)+1rem)] right-4 bottom-4 z-20 hidden w-72 flex-col gap-4 @min-[70rem]/workspace:flex"

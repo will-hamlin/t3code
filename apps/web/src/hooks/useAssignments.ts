@@ -82,7 +82,7 @@ export function useCreateAssignment() {
       !pending.current
     ) {
       setError(
-        "This Marshal already has an active assignment. Choose another or finish that assignment first.",
+        "This orchestrator already has an active assignment. Choose another or finish that assignment first.",
       );
       return false;
     }
@@ -172,7 +172,7 @@ export function useCreateAssignment() {
           message: {
             messageId: newMessageId(),
             role: "user",
-            text: `You are Marshal ${marshal}, responsible for this assignment in project ${project.title}.\n\n${brief.trim()}\n\nBegin implementation now. Make a concise working plan, delegate bounded subtasks to subagents, integrate and verify their results, and report back when finished. Publish and maintain structured progress using the task-plan tool. Keep only the goal, plan, essential decisions and a short status checkpoint in your context. Ask only when genuinely blocked; no proposal or plan approval is required.`,
+            text: `You are Orchestrator ${marshal}, responsible for this assignment in project ${project.title}.\n\n${brief.trim()}\n\nBegin implementation now. Make a concise working plan, delegate bounded subtasks to subagents, integrate and verify their results, and report back when finished. Publish and maintain structured progress using the task-plan tool. Keep only the goal, plan, essential decisions and a short status checkpoint in your context. Ask only when genuinely blocked; no proposal or plan approval is required.`,
             attachments: [],
           },
           modelSelection: selection,

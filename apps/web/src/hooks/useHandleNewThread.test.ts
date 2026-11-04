@@ -15,6 +15,7 @@ const testState = vi.hoisted(() => {
   let storedDraft: {
     readonly draftId: string;
     readonly environmentId: string;
+    readonly projectId?: string;
     readonly promotedTo: null;
     readonly threadId: string;
   } | null = null;
@@ -314,6 +315,24 @@ describe.each([
 });
 
 describe("useNewThreadHandler", () => {
+  it("reopens a dashboard draft with user content without navigating or resetting it", async () => {
+    testState.reset({
+      draftId: "draft-existing",
+      threadId: "thread-existing",
+      environmentId: "environment-ssh",
+      projectId: "project-remote",
+      promotedTo: null,
+    });
+    testState.giveUserText("draft-existing");
+    const result = await useNewThreadHandler()(
+      { environmentId: "environment-ssh", projectId: "project-remote" } as never,
+      { navigate: false },
+    );
+    expect(result).toEqual({ draftId: "draft-existing", threadId: "thread-existing" });
+    expect(testState.router.navigate).not.toHaveBeenCalled();
+    expect(testState.draftStore.setLogicalProjectDraftThreadId).not.toHaveBeenCalled();
+    expect(testState.draftStore.setPrompt).not.toHaveBeenCalled();
+  });
   it("keeps the text of a draft that gained some while it waited", async () => {
     testState.reset(null);
     const raced = {

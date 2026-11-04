@@ -75,14 +75,14 @@ export function deriveAssignmentProgress(
     ? percent === 100
       ? "Work verified"
       : running
-        ? "Marshal working"
+        ? "Orchestrator working"
         : implementation?.status === "completed"
           ? "Execution finished"
           : "Implementation paused"
     : plan?.status === "active" && !running
       ? "Plan ready for review"
       : running
-        ? "Marshal working"
+        ? "Orchestrator working"
         : "Waiting for progress updates";
   return { steps, percent, label, stage: approved ? 3 : plan ? 2 : 1 };
 }

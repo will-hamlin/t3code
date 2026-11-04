@@ -2,7 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { RunId } from "@t3tools/contracts";
 import type { ThreadRunSummary } from "@t3tools/client-runtime/state/models";
 import { makeThreadFixture } from "../test-fixtures";
-import { projectThreadPriority, projectThreadStatus } from "./ProjectDashboard.logic";
+import { projectThreadPriority, projectThreadStatus, threadCounts } from "./ProjectDashboard.logic";
 
 const run = (status: ThreadRunSummary["status"]): ThreadRunSummary => ({
   runId: RunId.make("dashboard-run"),
@@ -14,6 +14,16 @@ const run = (status: ThreadRunSummary["status"]): ThreadRunSummary => ({
 });
 
 describe("project dashboard status", () => {
+  it("keeps paused and blocked work distinct from completed work", () => {
+    expect(
+      threadCounts([
+        makeThreadFixture({ latestRun: run("completed"), runtime: null }),
+        makeThreadFixture({ latestRun: run("interrupted"), runtime: null }),
+        makeThreadFixture({ latestRun: run("running"), runtime: null }),
+        makeThreadFixture({ hasPendingApprovals: true }),
+      ]),
+    ).toEqual({ total: 4, completed: 1, away: 1, working: 1, attention: 1, ready: 0 });
+  });
   it.each([
     ["completed", "complete"],
     ["failed", "failed"],

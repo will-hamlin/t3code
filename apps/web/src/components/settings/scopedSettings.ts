@@ -475,7 +475,7 @@ export async function persistScopedSettingsPatch(
       return [
         {
           ...environment,
-          message: "This environment does not support this setting. Update efficio on it.",
+          message: "This environment does not support this setting. Update ficio on it.",
         },
       ];
     }
