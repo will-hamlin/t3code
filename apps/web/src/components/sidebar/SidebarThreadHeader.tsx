@@ -1,6 +1,7 @@
+import { useSidebarWorkspace } from "./SidebarWorkspace";
 import type { ScopedProjectRef } from "@t3tools/contracts";
-import { useProjectMarshal } from "../../hooks/useProjectMarshal";
-import { MarshalIcon } from "../MarshalIcon";
+
+import { FolderIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeftIcon, FolderPlusIcon, SearchIcon, SquarePenIcon, XIcon } from "lucide-react";
 import {
@@ -19,6 +20,7 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 export interface SidebarThreadHeaderProps {
   hasProjects: boolean;
   projectName?: string | undefined;
+  projectKey?: string | undefined;
   projectRef?: ScopedProjectRef | null | undefined;
   projectScope: ReactNode;
   projectFolderAction?: ReactNode;
@@ -41,7 +43,7 @@ export interface SidebarThreadHeaderProps {
 export function SidebarThreadHeader({
   hasProjects,
   projectName,
-  projectRef,
+  projectKey,
   projectScope,
   projectFolderAction,
   onNewProject,
@@ -59,7 +61,7 @@ export function SidebarThreadHeader({
   activeSearchResultIndex,
   onClearSearch,
 }: SidebarThreadHeaderProps) {
-  const marshal = useProjectMarshal(projectRef ?? null);
+  const slots = useSidebarWorkspace();
   const resultsVisible = isSearching && searchResultCount > 0;
   // Shrinking results can remove the active option; never leave aria-activedescendant pointing at it.
   const activeResultExists = resultsVisible && activeSearchResultIndex < searchResultCount;
@@ -69,17 +71,25 @@ export function SidebarThreadHeader({
 
   return (
     <div className="flex flex-col gap-3">
-      <Link
-        to="/"
-        className="flex items-center gap-2 rounded-md px-2 py-1 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
-      >
-        <ArrowLeftIcon className="size-4" /> All projects
-      </Link>
-      {projectName ? (
-        <div className="flex items-center gap-2 px-2 py-1 text-sm">
-          <MarshalIcon name={marshal} className="size-4 text-muted-foreground" />
+      <div className="flex min-w-0 items-center gap-2">
+        <Link
+          to="/"
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+        >
+          <ArrowLeftIcon className="size-4" /> All assignments
+        </Link>
+        <div ref={slots?.setControls} className="shrink-0" />
+      </div>
+      {projectName && projectKey ? (
+        <Link
+          to="/project/$projectKey"
+          params={{ projectKey }}
+          aria-label={`Open project: ${projectName}`}
+          className="flex min-w-0 items-center gap-2 rounded-md bg-(--oc-collar) px-3 py-2.5 text-sm text-foreground focus-visible:outline-ring"
+        >
+          <FolderIcon className="size-4 text-muted-foreground" />
           <span className="truncate">{projectName}</span>
-        </div>
+        </Link>
       ) : null}
       <div className="flex items-center gap-1">
         <div className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-sidebar-muted-foreground hover:bg-sidebar-row-hover hover:text-sidebar-foreground focus-within:bg-sidebar-row-hover focus-within:text-sidebar-foreground focus-within:ring-1 focus-within:ring-inset focus-within:ring-ring/70">

@@ -1,3 +1,4 @@
+import { entryName } from "~/lib/displayText";
 import type {
   StorageCleanupReport,
   StorageCleanupSettings,
@@ -230,7 +231,7 @@ function CleanupResults({
                   {entry.path && (
                     <>
                       <span>Folder</span>
-                      <code className="text-foreground/80">{entry.path}</code>
+                      <code className="text-foreground/80">{entryName(entry.path)}</code>
                     </>
                   )}
                   {entry.threadTitle && (

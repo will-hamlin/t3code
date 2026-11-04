@@ -1,3 +1,4 @@
+import { entryName } from "~/lib/displayText";
 import { useParams } from "@tanstack/react-router";
 import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import {
@@ -436,7 +437,7 @@ function IgnoredFileRow({
   return (
     <label className="flex cursor-pointer items-center gap-2 px-2.5 py-1.5 text-sm not-last:border-b has-disabled:cursor-not-allowed has-disabled:opacity-64">
       <Checkbox checked={checked} disabled={tooLarge} onCheckedChange={onCheckedChange} />
-      <span className="min-w-0 flex-1 truncate font-mono text-xs">{file.path}</span>
+      <span className="min-w-0 flex-1 truncate font-mono text-xs">{entryName(file.path)}</span>
       <span className="shrink-0 text-muted-foreground text-xs tabular-nums">
         {tooLarge ? "Over 1 MB" : formatBytes(file.byteLength)}
       </span>

@@ -828,7 +828,7 @@ it.effect("rechecks run ownership immediately before calling the provider", () =
   }).pipe(Effect.provide(layerRunExecutionTest)),
 );
 
-it.effect.each([undefined, "Davout"] as const)(
+it.effect.each([undefined, "Davout", "Ney"] as const)(
   "passes app context and %s Marshal policy to the provider",
   (marshal) =>
     Effect.gen(function* () {
@@ -884,7 +884,8 @@ it.effect.each([undefined, "Davout"] as const)(
 
       const input = yield* Deferred.await(started);
       if (marshal) {
-        assert.include(input.message.text, "You are Marshal Davout");
+        assert.include(input.message.text, `You are Marshal ${marshal}`);
+        if (marshal === "Ney") assert.include(input.message.text, "Keep the goal focused");
         assert.include(input.message.text, "T3 delegate_task");
         assert.include(input.message.text, "Manage version control internally");
         assert.isTrue(input.message.text.endsWith("What is on my list?"));
@@ -922,7 +923,21 @@ it.effect.each([undefined, "Davout"] as const)(
               }),
               ServerSettings.layerTest({
                 projectSettingsOverrides: {
-                  [ProjectId.make("marshal-project")]: marshal ? { marshalAgent: marshal } : {},
+                  [ProjectId.make("marshal-project")]:
+                    marshal === "Ney"
+                      ? {
+                          assignments: {
+                            [ThreadId.make("thread:run-execution-app-context")]: {
+                              title: "Task",
+                              brief: "Keep the goal focused",
+                              marshalAgent: "Ney",
+                              workflow: { phase: "proposal" },
+                            },
+                          },
+                        }
+                      : marshal
+                        ? { marshalAgent: marshal }
+                        : {},
                 },
               }),
             ),

@@ -258,14 +258,15 @@ describe("ChatMarkdown streaming", () => {
         onRunShellCommand={onRunShellCommand}
       />
     );
-    await using screen = await render(message("```bash\necho hello\n```", true));
+    await using screen = await render(message("```bash\ncat src/notes.md\n```", true));
     const { container, rerender } = screen;
     const runButtons = () => buttonsLabelled(container, "Run in terminal");
     expect(runButtons()).toHaveLength(0);
 
-    await rerender(message("```bash\necho hello\n```"));
+    await rerender(message("```bash\ncat src/notes.md\n```"));
     await act(async () => runButtons()[0]!.click());
-    expect(onRunShellCommand).toHaveBeenCalledExactlyOnceWith("echo hello");
+    expect(onRunShellCommand).toHaveBeenCalledExactlyOnceWith("cat src/notes.md");
+    expect(container.textContent).not.toContain("src/notes.md");
 
     for (const text of [
       "~~~bash\necho tilde\n~~~",
@@ -280,10 +281,10 @@ describe("ChatMarkdown streaming", () => {
 
     for (const text of [
       "```bash\necho one\necho two\n```",
-      "```typescript\necho hello\n```",
+      "```typescript\ncat src/notes.md\n```",
       "```bash\n\n```",
-      "```bash\necho hello\n\n```",
-      "```bash\necho hello\\\n```",
+      "```bash\ncat src/notes.md\n\n```",
+      "```bash\ncat src/notes.md\\\n```",
       "```bash\necho safe \u202e#\n```",
       "```bash\necho incomplete",
       "~~~bash\necho incomplete",

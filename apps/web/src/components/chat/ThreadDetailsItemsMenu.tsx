@@ -13,13 +13,15 @@ import {
 } from "./threadDetailsItems";
 
 /** Menu body that shows and hides thread details items. The card's context menu and Settings share it. */
-export function ThreadDetailsItemsMenuItems() {
+export function ThreadDetailsItemsMenuItems({ pinnedUsage = false }: { pinnedUsage?: boolean }) {
   const visibility = useClientSettings(resolveThreadDetailsVisibility);
   return (
     <>
       <MenuGroup>
         <MenuGroupLabel>Show in thread details</MenuGroupLabel>
-        {THREAD_DETAILS_USER_ITEMS.map((item) => (
+        {THREAD_DETAILS_USER_ITEMS.filter(
+          (item) => !pinnedUsage || (item.id !== "usage" && item.id !== "context"),
+        ).map((item) => (
           <MenuCheckboxItem
             key={item.id}
             checked={visibility[item.id]}

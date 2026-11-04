@@ -1,12 +1,20 @@
 import { useId } from "react";
 import styles from "./DotMatrix.module.css";
 
-export function DotMatrix({ moving = false, fade = false }: { moving?: boolean; fade?: boolean }) {
+export function DotMatrix({
+  moving = false,
+  fade = false,
+  breathing = false,
+}: {
+  moving?: boolean;
+  fade?: boolean;
+  breathing?: boolean;
+}) {
   const id = useId();
   return (
     <svg
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 size-full overflow-hidden text-muted-foreground opacity-20"
+      className={`pointer-events-none absolute inset-0 size-full overflow-hidden text-muted-foreground ${breathing ? styles.breathing : "opacity-20"}`}
       data-dot-matrix=""
       preserveAspectRatio="none"
     >

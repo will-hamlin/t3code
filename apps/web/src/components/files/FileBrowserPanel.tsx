@@ -1,3 +1,4 @@
+import { entryName } from "~/lib/displayText";
 import { RefreshIcon } from "~/components/ui/refresh-icon";
 import type {
   ContextMenuItem as TreeContextMenuItem,
@@ -50,7 +51,7 @@ interface FileBrowserPanelProps {
 }
 
 function treePath(entry: ProjectEntry): string {
-  return entry.kind === "directory" ? `${entry.path}/` : entry.path;
+  return entryName(entry.path);
 }
 
 function RefreshFilesButton(props: { isPending: boolean; onRefresh: () => void }) {

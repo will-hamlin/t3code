@@ -1,3 +1,4 @@
+import { displayText, rehypeDisplayNames } from "../lib/displayText";
 import { buildFileLinkParentSuffixByPath, fileLinkLabel } from "@t3tools/shared/fileLinks";
 import {
   isWindowsDrivePathHref,
@@ -394,12 +395,14 @@ const CHAT_MARKDOWN_RENDER_REHYPE_PLUGINS = [
   rehypeHeadingIds,
   rehypeTextDirection,
   rehypeChipPunctuation,
+  rehypeDisplayNames,
 ] satisfies NonNullable<ReactMarkdownOptions["rehypePlugins"]>;
 
 const CHAT_MARKDOWN_LITERAL_HTML_REHYPE_PLUGINS = [
   rehypeHeadingIds,
   rehypeTextDirection,
   rehypeChipPunctuation,
+  rehypeDisplayNames,
 ] satisfies NonNullable<ReactMarkdownOptions["rehypePlugins"]>;
 
 function markdownUrlTransform(href: string) {
@@ -681,8 +684,11 @@ function useChatMarkdownState({
   // renderer context, and every block reading it, unchanged.
   // A template literal marks the key as a string, so the compiler memoizes the maps on its value.
   const fileLinksKey = `${fileLinkSourcesKey(text, cwd, imageBaseDir)}`;
-  const { markdownFileLinkMetaByHref, inlineCodeFileLinkMetaByText, fileLinkParentSuffixByPath } =
-    resolveFileLinkSources(fileLinksKey, cwd, imageBaseDir);
+  const { markdownFileLinkMetaByHref, inlineCodeFileLinkMetaByText } = resolveFileLinkSources(
+    fileLinksKey,
+    cwd,
+    imageBaseDir,
+  );
   const resolveThreadPullRequest = (
     href: string,
   ): (ThreadPullRequestKey & { readonly url: string }) | null => {
@@ -851,7 +857,7 @@ function useChatMarkdownState({
             ...(fileLinkMeta.line !== undefined ? { line: fileLinkMeta.line } : {}),
             ...(fileLinkMeta.column !== undefined ? { column: fileLinkMeta.column } : {}),
           },
-          fileLinkParentSuffixByPath,
+          new Map(),
         )}
         copyMarkdown={copyMarkdown}
         theme={resolvedTheme}
@@ -1359,7 +1365,7 @@ const CHAT_MARKDOWN_COMPONENTS = {
       }
       return (
         <code {...props} className={className} onDoubleClick={selectInlineCode}>
-          {children}
+          {displayText(codeText)}
         </code>
       );
     }
@@ -1593,18 +1599,18 @@ const CHAT_MARKDOWN_COMPONENTS = {
     const highlightedCode = (
       <RenderErrorBoundary
         resetKeys={[codeBlock.code, language, diffThemeName, isStreaming]}
-        fallback={<pre {...props}>{children}</pre>}
+        fallback={<pre {...props}>{displayText(codeBlock.code)}</pre>}
       >
         <Suspense
           fallback={
             <pre {...props} className="invisible" aria-hidden>
-              {children}
+              {displayText(codeBlock.code)}
             </pre>
           }
         >
           <SuspenseShikiCodeBlock
             className={codeBlock.className}
-            code={codeBlock.code}
+            code={displayText(codeBlock.code)}
             themeName={diffThemeName}
             isStreaming={isStreaming}
           />

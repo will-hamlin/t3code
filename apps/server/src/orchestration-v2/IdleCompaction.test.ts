@@ -26,7 +26,11 @@ import * as IdleCompactionService from "./IdleCompactionService.ts";
 import * as Orchestrator from "./Orchestrator.ts";
 import * as ProjectionStore from "./ProjectionStore.ts";
 
-import { idleCompactionWindow, type IdleCompactionRecords } from "./IdleCompaction.ts";
+import {
+  idleCompactionWindow,
+  marshalCompactionRun,
+  type IdleCompactionRecords,
+} from "./IdleCompaction.ts";
 
 const NOW_MS = Date.parse("2026-10-19T12:00:00.000Z");
 const MINUTE_MS = 60_000;
@@ -417,4 +421,40 @@ describe("IdleCompactionService", () => {
       }),
     ),
   );
+});
+
+describe("Marshal context compaction", () => {
+  it("compacts large idle contexts without swallowing queued work or repeating compaction", () => {
+    const large = records({ usedTokens: 40_000 });
+    expect(marshalCompactionRun(large)?.id).toBe(runId);
+    expect(marshalCompactionRun(records({ usedTokens: 20_000 }))).toBeNull();
+    expect(
+      marshalCompactionRun({
+        ...large,
+        messages: large.messages.map((message) => ({ ...message, text: "/compact" })),
+      }),
+    ).toBeNull();
+    expect(
+      marshalCompactionRun({
+        ...large,
+        runs: [
+          ...large.runs,
+          { ...large.runs[0]!, id: RunId.make("queued"), ordinal: 2, status: "queued" },
+        ],
+      }),
+    ).toBeNull();
+    expect(
+      marshalCompactionRun({
+        ...large,
+        thread: {
+          ...large.thread,
+          lineage: {
+            ...large.thread.lineage,
+            parentThreadId: ThreadId.make("parent"),
+            relationshipToParent: "subagent",
+          },
+        },
+      }),
+    ).toBeNull();
+  });
 });

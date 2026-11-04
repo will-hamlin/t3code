@@ -1,3 +1,4 @@
+import { entryName } from "~/lib/displayText";
 import { RefreshIcon } from "~/components/ui/refresh-icon";
 import { Spinner } from "~/components/ui/spinner";
 import type { EnvironmentId } from "@t3tools/contracts";
@@ -168,7 +169,7 @@ function BreadcrumbMenuContent(props: {
                     >
                       {entry.label}
                     </TooltipTrigger>
-                    <TooltipPopup side="right">{entry.path}</TooltipPopup>
+                    <TooltipPopup side="right">{entryName(entry.path)}</TooltipPopup>
                   </Tooltip>
                 </>
               );

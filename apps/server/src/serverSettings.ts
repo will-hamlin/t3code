@@ -2,6 +2,7 @@ import {
   DEFAULT_SERVER_SETTINGS,
   ModelSelection,
   ProjectId,
+  type ThreadId,
   ProjectScript,
   keepUnknownOverrideKeys,
   ProjectSettingsOverrides,
@@ -77,6 +78,58 @@ export {
 const encodeServerSettings = Schema.encodeEffect(ServerSettings);
 const encodeServerSettingsJson = Schema.encodeUnknownEffect(fromJsonStringPretty(ServerSettings));
 const decodeServerSettings = Schema.decodeUnknownEffect(ServerSettings);
+
+const retainProjectMarshalAssignments = Effect.fn("ServerSettings.retainProjectMarshalAssignments")(
+  function* (current: ServerSettings, next: ServerSettings, settingsPath: string) {
+    const overrides = { ...next.projectSettingsOverrides };
+    let changed = false;
+    for (const [id, previous] of Object.entries(current.projectSettingsOverrides)) {
+      const updated = overrides[id as ProjectId];
+      if (updated === undefined) continue;
+      if (previous.assignments) {
+        for (const [threadId, assignment] of Object.entries(previous.assignments)) {
+          const replacement = updated.assignments?.[threadId as ThreadId];
+          if (replacement && replacement.marshalAgent !== assignment.marshalAgent)
+            return yield* new ServerSettingsError({
+              settingsPath,
+              operation: "change-assignment-marshal",
+            });
+        }
+        overrides[id as ProjectId] = {
+          ...updated,
+          assignments: { ...previous.assignments, ...updated.assignments },
+        };
+        changed = true;
+      }
+      if (!previous.marshalAgent) continue;
+      if (updated.marshalAgent && updated.marshalAgent !== previous.marshalAgent)
+        return yield* new ServerSettingsError({
+          settingsPath,
+          operation: "change-project-marshal",
+        });
+      if (!updated.marshalAgent) {
+        overrides[id as ProjectId] = {
+          ...overrides[id as ProjectId],
+          marshalAgent: previous.marshalAgent,
+        };
+        changed = true;
+      }
+    }
+    const occupied = new Set<string>();
+    for (const project of Object.values(overrides)) {
+      for (const assignment of Object.values(project.assignments ?? {})) {
+        if (assignment.status === "completed") continue;
+        if (occupied.has(assignment.marshalAgent))
+          return yield* new ServerSettingsError({
+            settingsPath,
+            operation: "marshal-already-assigned",
+          });
+        occupied.add(assignment.marshalAgent);
+      }
+    }
+    return changed ? { ...next, projectSettingsOverrides: overrides } : next;
+  },
+);
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -311,7 +364,13 @@ const makeTest = Effect.fn("serverSettings.makeTest")(function* (
   ): Effect.Effect<ServerSettings, ServerSettingsError> =>
     writeSemaphore.withPermits(1)(
       Ref.get(currentSettingsRef).pipe(
-        Effect.flatMap(update),
+        Effect.flatMap((current) =>
+          update(current).pipe(
+            Effect.flatMap((next) =>
+              retainProjectMarshalAssignments(current, next, "test settings"),
+            ),
+          ),
+        ),
         Effect.flatMap(normalizeServerSettings),
         Effect.tap((nextSettings) => Ref.set(currentSettingsRef, nextSettings)),
         Effect.map(resolveTextGenerationProvider),
@@ -1171,7 +1230,11 @@ const make = Effect.gen(function* () {
             cause: parseFailure.value,
           });
         }
-        const updated = yield* update(current);
+        const updated = yield* retainProjectMarshalAssignments(
+          current,
+          yield* update(current),
+          settingsPath,
+        );
         // Vet before secrets: a variable the policy hides from clients is not one they removed.
         const vetted = managed.vetWrite(current, yield* normalizeServerSettings(updated), patch);
         if (vetted._tag === "Locked") {

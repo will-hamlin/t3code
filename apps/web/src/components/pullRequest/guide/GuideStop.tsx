@@ -1,3 +1,4 @@
+import { entryName } from "~/lib/displayText";
 import type { FileDiffContentsLoader, FileDiffMetadata } from "@pierre/diffs";
 import type {
   PullRequestReviewGuideAttention,
@@ -194,7 +195,7 @@ export function GuideStop({
                             className="size-3.5 shrink-0 text-muted-foreground"
                           />
                           <span className="min-w-0 truncate font-mono text-foreground">
-                            {file.path}
+                            {entryName(file.path)}
                           </span>
                           {file.note !== undefined && file.note.trim() !== "" ? (
                             <span className="ml-auto min-w-0 truncate text-muted-foreground @max-[30rem]/guide:hidden">

@@ -1,0 +1,74 @@
+.tree,
+.tree ul {
+  position: relative;
+  display: flex;
+  width: max-content;
+  justify-content: center;
+  padding: 24px 0 0;
+  margin: 0;
+  list-style: none;
+}
+
+.tree li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 8px 0;
+}
+
+.tree li::before,
+.tree li::after {
+  position: absolute;
+  top: 0;
+  right: 50%;
+  width: 50%;
+  height: 24px;
+  border-top: 1px solid var(--border);
+  content: "";
+}
+
+.tree li::after {
+  right: auto;
+  left: 50%;
+  border-left: 1px solid var(--border);
+}
+
+.tree li:first-child::before,
+.tree li:last-child::after {
+  border: 0;
+}
+
+.tree li:last-child::before {
+  border-right: 1px solid var(--border);
+}
+
+.tree li:only-child::before {
+  display: none;
+}
+
+.tree li:only-child::after {
+  border-left: 1px solid var(--border);
+}
+
+.tree ul::before {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 24px;
+  border-left: 1px solid var(--border);
+  content: "";
+}
+
+.tree {
+  padding-top: 0;
+}
+
+.tree > li {
+  padding-top: 0;
+}
+
+.tree > li::before,
+.tree > li::after {
+  display: none;
+}

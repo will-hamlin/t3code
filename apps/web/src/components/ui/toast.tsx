@@ -1,3 +1,4 @@
+import { displayText } from "~/lib/displayText";
 import { Spinner } from "~/components/ui/spinner";
 
 import { Toast } from "@base-ui/react/toast";
@@ -214,13 +215,19 @@ function ToastDescriptionAndExpandable({
   const [open, setOpen] = useState(false);
 
   if (!expandableContent) {
-    return <Toast.Description className={descriptionClassName} data-slot="toast-description" />;
+    return (
+      <Toast.Description className={descriptionClassName} data-slot="toast-description">
+        {typeof toastDescription === "string" ? displayText(toastDescription) : undefined}
+      </Toast.Description>
+    );
   }
 
   if (!descriptionTrigger) {
     return (
       <>
-        <Toast.Description className={descriptionClassName} data-slot="toast-description" />
+        <Toast.Description className={descriptionClassName} data-slot="toast-description">
+          {typeof toastDescription === "string" ? displayText(toastDescription) : undefined}
+        </Toast.Description>
         <ToastExpandableSection labels={labels}>{expandableContent}</ToastExpandableSection>
       </>
     );

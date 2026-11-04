@@ -1,3 +1,4 @@
+import { displayText } from "~/lib/displayText";
 import { type ResolvedKeybindingsConfig } from "@t3tools/contracts";
 import { LegendList, type LegendListRef } from "@legendapp/list/react";
 import { ChevronRightIcon } from "lucide-react";
@@ -206,7 +207,9 @@ function DisabledCommandPaletteResultRow(props: {
             <SearchMatchHintLine hint={props.item.matchHint} />
           ) : props.item.description ? (
             <span className="min-w-0 text-muted-foreground/70 text-xs">
-              {props.item.description}
+              {typeof props.item.description === "string"
+                ? displayText(props.item.description)
+                : props.item.description}
             </span>
           ) : null}
         </span>
@@ -258,7 +261,9 @@ function CommandPaletteResultRow(props: {
             <SearchMatchHintLine hint={props.item.matchHint} />
           ) : props.item.description ? (
             <span className="min-w-0 text-muted-foreground/70 text-xs">
-              {props.item.description}
+              {typeof props.item.description === "string"
+                ? displayText(props.item.description)
+                : props.item.description}
             </span>
           ) : null}
         </span>

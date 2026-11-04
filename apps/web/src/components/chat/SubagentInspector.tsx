@@ -7,8 +7,8 @@ import { appAtomRegistry } from "../../rpc/atomRegistry";
 import { useQuietThreadShells } from "../../state/entities";
 import { threadFamilies } from "../../state/threads";
 import ChatView from "../ChatView";
-import { DotMatrix } from "../DotMatrix";
 import { PROJECT_STATUS, projectThreadStatus } from "../ProjectDashboard.logic";
+import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
 import { BackgroundThreadContext } from "./backgroundThread";
 
@@ -68,13 +68,12 @@ export function SubagentInspector({
   return (
     <aside
       aria-label="Subagents"
-      className="relative flex h-full w-96 max-w-[40%] shrink-0 flex-col border-l border-border bg-background"
+      className="pointer-events-auto relative flex h-[calc(50dvh-5rem)] min-h-36 shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-background/95 shadow-lg"
     >
       <div className="relative shrink-0 border-b border-border p-4">
-        <DotMatrix fade />
         <h2 className="relative font-mono text-xs text-muted-foreground">Subagents</h2>
       </div>
-      <div className="max-h-48 shrink-0 overflow-y-auto p-2">
+      <div className={cn("min-h-0 overflow-y-auto p-2", selected ? "max-h-24 shrink-0" : "flex-1")}>
         {children.length === 0 ? (
           <p className="p-2 text-xs text-muted-foreground">No subagents yet</p>
         ) : (

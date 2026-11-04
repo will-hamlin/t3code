@@ -1,5 +1,8 @@
+import { Button } from "./ui/button";
+import { SidebarContextReporter } from "./sidebar/SidebarContextBar";
+import { SidebarThreadUsage } from "./sidebar/SidebarWorkspace";
+import { WorkspaceFileTree } from "./chat/WorkspaceFileTree";
 import { SubagentInspector } from "./chat/SubagentInspector";
-import { useSidebarVisibility } from "./ui/sidebar";
 import { DotMatrix } from "./DotMatrix";
 import { ChildThreadApprovals } from "./chat/ChildThreadApprovals";
 import { workspaceAreaProps } from "../lib/workspaceFocus";
@@ -427,7 +430,6 @@ export default function ChatView(props: ChatViewProps) {
     embedded: parentPanel,
   } = props;
   const embedded = parentPanel !== undefined;
-  const sidebarVisible = useSidebarVisibility();
   const canOperateThread = useEnvironmentScope(environmentId, AuthOrchestrationOperateScope);
   const canOperateTerminal = useEnvironmentScope(environmentId, AuthTerminalOperateScope);
   const draftId = routeKind === "draft" ? props.draftId : null;
@@ -1374,13 +1376,18 @@ export default function ChatView(props: ChatViewProps) {
     }
     return findLatestProposedPlan(serverProjection, activeLatestRun?.runId ?? null);
   })();
-  const showPlanFollowUpPrompt = shouldShowPlanFollowUpPrompt({
-    pendingUserInputCount: pendingUserInputs.length,
-    interactionMode,
-    latestTurnSettled: latestRunSettled,
-    hasActionableProposedPlan: hasActionableProposedPlan(activeProposedPlan),
-    hasComposerAttachments: composerHasAttachments,
-  });
+  const marshalAssignment = activeThread
+    ? settings.projectSettingsOverrides[activeThread.projectId]?.assignments?.[activeThread.id]
+    : undefined;
+  const showPlanFollowUpPrompt =
+    !marshalAssignment?.workflow &&
+    shouldShowPlanFollowUpPrompt({
+      pendingUserInputCount: pendingUserInputs.length,
+      interactionMode,
+      latestTurnSettled: latestRunSettled,
+      hasActionableProposedPlan: hasActionableProposedPlan(activeProposedPlan),
+      hasComposerAttachments: composerHasAttachments,
+    });
   // Answering an approval or question on any client resumes quota spending, so include it in the key.
   const usageLimitsKey =
     activeProviderInstanceId === null || (isServerThread && activeThread === undefined)
@@ -2784,7 +2791,7 @@ export default function ChatView(props: ChatViewProps) {
         : serverConfig === null
           ? "Side chats are not ready yet. Try again in a moment."
           : serverConfig.environment.capabilities.sideChats !== true
-            ? "Update this environment's T3 Code server to use side chats."
+            ? "Update this environment's efficio server to use side chats."
             : sideChatsOffered && !isServerThread
               ? "Side chats start after the first message."
               : sideChat.available &&
@@ -3243,6 +3250,8 @@ export default function ChatView(props: ChatViewProps) {
     />
   ) : null;
   const panelToggleControlProps = {
+    showTerminalControl: false,
+    showThreadPanelControl: false,
     terminalAvailable: activeProject !== null,
     terminalOpen: terminalUiState.terminalOpen,
     terminalShortcutLabel: shortcutLabelForCommand(keybindings, "terminal.toggle"),
@@ -3258,10 +3267,7 @@ export default function ChatView(props: ChatViewProps) {
     onToggleRightPanel: toggleRightPanelStable,
   } satisfies PanelLayoutControlsProps;
   const panelToggleControls = (
-    <PanelLayoutControls
-      {...panelToggleControlProps}
-      showThreadPanelControl={!inlineRightPanelOwnsTitleBar}
-    />
+    <PanelLayoutControls {...panelToggleControlProps} showThreadPanelControl={false} />
   );
   const threadPanelHeaderControl = <ThreadPanelHeaderControl {...panelToggleControlProps} />;
   const panelLayoutControls = (
@@ -3284,8 +3290,24 @@ export default function ChatView(props: ChatViewProps) {
   const content = (
     <div
       ref={setWorkspaceLayoutElement}
-      className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden bg-background"
+      className="group/workspace @container/workspace relative flex min-h-0 min-w-0 flex-1 overflow-hidden bg-background"
     >
+      {activeThreadRef ? (
+        <SidebarContextReporter
+          threadRef={activeThreadRef}
+          percent={activeContextWindow?.usedPercentage ?? null}
+        />
+      ) : null}
+      {embedded ? null : (
+        <SidebarThreadUsage
+          usage={{
+            providerInstanceId: activeProviderInstanceId,
+            providers: providerStatuses,
+            sources: serverConfig?.usageLimitSources ?? EMPTY_USAGE_LIMIT_SOURCES,
+            contextWindow: activeContextWindow,
+          }}
+        />
+      )}
       {embedded ? null : (
         <DeviceSetupDialogHost
           threadKey={activeThreadKey}
@@ -3355,6 +3377,7 @@ export default function ChatView(props: ChatViewProps) {
               thread: activeThreadRef,
               enabled: threadFindEnabled,
             }}
+            activityCards={!embedded && !rightPanelOpen}
             store={chatCanvasStore}
             threadRef={activeThreadRef}
             preview={canvasPreview}
@@ -3390,7 +3413,7 @@ export default function ChatView(props: ChatViewProps) {
               {...conversationArea}
               className="relative flex min-h-0 flex-1 flex-col bg-background"
             >
-              <DotMatrix moving={isWorking} />
+              <DotMatrix moving={isWorking} breathing />
               <WorkspaceMutationIdContext value={workspaceMutationId}>
                 <ThreadTimeline
                   pendingApprovals={pendingApprovals}
@@ -3547,6 +3570,34 @@ export default function ChatView(props: ChatViewProps) {
                         : undefined
                     }
                   >
+                    {marshalAssignment?.workflow &&
+                    activeProject &&
+                    activeProposedPlan?.status === "active" &&
+                    marshalAssignment.workflow.phase !== "execution" ? (
+                      <div className="mb-3 flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 text-xs">
+                        <span>
+                          Discuss changes here. Approve each phase in the project overview.
+                        </span>
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          onClick={() =>
+                            void navigate({
+                              to: "/project/$projectKey",
+                              params: {
+                                projectKey: deriveLogicalProjectKeyFromSettings(
+                                  activeProject,
+                                  projectGroupingSettings,
+                                ),
+                              },
+                            })
+                          }
+                        >
+                          Review{" "}
+                          {marshalAssignment.workflow.phase === "proposal" ? "proposal" : "plan"}
+                        </Button>
+                      </div>
+                    ) : null}
                     <ChildThreadApprovals threadRef={activeThreadRef} />
                     <ComposerSurface.Shell contextRow={showComposerContextStrip}>
                       <ComposerSurface.Host
@@ -4007,12 +4058,31 @@ export default function ChatView(props: ChatViewProps) {
         </ChatRightPanel>
       ) : null}
 
-      {!embedded && !sidebarVisible && !isMobileViewport ? (
-        <SubagentInspector
-          key={routeThreadKey}
-          threadRef={routeKind === "server" ? routeThreadRef : null}
-          parentPanel={sideChatParentPanel}
-        />
+      {!embedded && !isMobileViewport && !rightPanelOpen ? (
+        <div
+          aria-label="Workspace activity"
+          className="pointer-events-none absolute top-[calc(var(--workspace-topbar-height)+1rem)] right-4 bottom-4 z-20 hidden w-72 flex-col gap-4 @min-[70rem]/workspace:flex"
+        >
+          <SubagentInspector
+            key={routeThreadKey}
+            threadRef={routeKind === "server" ? routeThreadRef : null}
+            parentPanel={sideChatParentPanel}
+          />
+          {activeWorkspaceRoot ? (
+            <div className="pointer-events-auto flex min-h-0 flex-1 flex-col">
+              <WorkspaceFileTree
+                key={activeWorkspaceRoot}
+                environmentId={activeThread.environmentId}
+                cwd={activeWorkspaceRoot}
+                relevantPaths={turnDiffSummaries.flatMap((summary) =>
+                  summary.files.map((file) => file.path),
+                )}
+                mutationId={workspaceMutationId}
+                onOpenFile={openFileSurfaceStable}
+              />
+            </div>
+          ) : null}
+        </div>
       ) : null}
       <RevertConfirmHost threadKey={routeThreadKey} onConfirm={onConfirmRevertStable} />
       {embedded ? null : <LinkPullRequestDialogHost />}

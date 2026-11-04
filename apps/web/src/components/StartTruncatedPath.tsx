@@ -1,3 +1,4 @@
+import { entryName } from "~/lib/displayText";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 
@@ -15,10 +16,10 @@ export function StartTruncatedPath({ path, className }: { path: string; classNam
           />
         }
       >
-        <bdi>{path}</bdi>
+        <bdi>{entryName(path)}</bdi>
       </TooltipTrigger>
       <TooltipPopup side="top" variant="code">
-        {path}
+        {entryName(path)}
       </TooltipPopup>
     </Tooltip>
   );

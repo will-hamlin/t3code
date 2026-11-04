@@ -1,3 +1,4 @@
+import { entryName } from "~/lib/displayText";
 import { Check, Copy } from "lucide";
 import { PlayIcon, WrapTextIcon } from "lucide-react";
 import { toHtml } from "hast-util-to-html";
@@ -105,7 +106,7 @@ function MarkdownCodeBlockTitleContent({
     return (
       <>
         <PierreEntryIcon pathValue={fenceTitle} kind="file" theme={theme} className="size-3.5" />
-        <span className="truncate">{fenceTitle}</span>
+        <span className="truncate">{entryName(fenceTitle)}</span>
       </>
     );
   }

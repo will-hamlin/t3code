@@ -1,3 +1,4 @@
+import { displayText } from "~/lib/displayText";
 import {
   commandHighlightLanguage,
   withVisibleControlCharacters,
@@ -47,7 +48,7 @@ function HighlightedCommand({ code, theme }: { code: string; theme: "light" | "d
 
 export function ShellCommandBlock({ command }: { command: string }) {
   const resolvedTheme = useRenderedAppearance();
-  const code = withVisibleControlCharacters(command.trim());
+  const code = withVisibleControlCharacters(displayText(command.trim()));
   if (!code) return null;
   const plain = <PlainWords code={code} />;
   return (

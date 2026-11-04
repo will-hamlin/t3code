@@ -3,6 +3,7 @@ import {
   MARSHAL_NAMES,
   ORCHESTRATOR_BASE_INSTRUCTIONS,
   marshalTurnText,
+  marshalWorkingMemory,
 } from "./projectOrchestrators.ts";
 
 describe("Marshal prompt delivery", () => {
@@ -18,6 +19,26 @@ describe("Marshal prompt delivery", () => {
     const text = marshalTurnText("Review accessibility", "Davout", true);
     expect(text).toContain("delegated agent working for Marshal Davout");
     expect(text).not.toContain("You are Marshal Davout");
+  });
+  it("bounds rehydrated memory and isolates child context", () => {
+    const assignment = {
+      title: "Task",
+      brief: "g".repeat(20_000),
+      marshalAgent: "Ney" as const,
+      workflow: {
+        phase: "execution" as const,
+        proposal: { planId: "proposal" as never, markdown: "OLD DRAFT" },
+        plan: { planId: "plan" as never, markdown: "p".repeat(40_000) },
+      },
+    };
+    const packet = marshalWorkingMemory(assignment);
+    expect(packet.length).toBeLessThan(10_500);
+    expect(packet).toContain("approvedPlan");
+    expect(packet).not.toContain("OLD DRAFT");
+    expect(marshalTurnText("Review accessibility", "Ney", true, assignment)).not.toContain(
+      "approvedPlan",
+    );
+    expect(marshalTurnText("Status?", "Ney", false, assignment)).toContain(packet);
   });
   it("preserves native commands and unassigned projects", () => {
     expect(marshalTurnText("/compact", "Ney", false)).toBe("/compact");

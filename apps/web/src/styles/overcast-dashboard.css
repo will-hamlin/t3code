@@ -7,7 +7,9 @@ body,
   --oc-tracking-display: -0.035em;
   --oc-tracking-title: -0.01em;
   --oc-collar: #2b4675;
+  --oc-project-link: #719ce8;
   --oc-signal: #c8402f;
+  --oc-file-relevant: #f0786b;
   --oc-ginkgo: #e3b23c;
   --oc-font-display: "Inter Tight", Inter, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
@@ -94,7 +96,7 @@ body [data-slot="menu-sub-content"] {
 body
   :is(button, a, [role="button"], [role="menuitem"], [role="option"]):not(:disabled):not(
     [aria-disabled="true"]
-  ):hover,
+  ):not([data-project-card-open]):hover,
 body [data-highlighted]:not([data-disabled]) {
   background-color: var(--oc-collar);
   color: var(--foreground);

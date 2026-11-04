@@ -1,3 +1,4 @@
+import { useSidebarWorkspace } from "../sidebar/SidebarWorkspace";
 import type {
   EditorId,
   EnvironmentId,
@@ -26,13 +27,6 @@ import {
 import { ThreadDetailsItemsMenuItems } from "./ThreadDetailsItemsMenu";
 import { resolveThreadDetailsVisibility, THREAD_DETAILS_ITEMS } from "./threadDetailsItems";
 import { useClientSettings } from "../../hooks/useSettings";
-import { cn } from "../../lib/utils";
-import { SlidersHorizontalIcon } from "lucide-react";
-import { ThreadDetailsControl } from "./ThreadDetailsControl";
-import {
-  THREAD_DETAILS_PANEL_ICON_CLASS,
-  THREAD_DETAILS_PANEL_LABEL_CLASS,
-} from "./threadDetailsPanelStyles";
 import { Menu, MenuPopup } from "../ui/menu";
 
 const GitActionsControl = memo(BaseGitActionsControl);
@@ -83,6 +77,7 @@ interface ThreadDetailsPanelProps extends Pick<
 
 export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
   const visible = useClientSettings(resolveThreadDetailsVisibility);
+  const sidebarSlots = useSidebarWorkspace();
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
   const activeThreadRef = { environmentId: props.environmentId, threadId: props.threadId };
   const branchToolbarProps = {
@@ -196,30 +191,13 @@ export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
                 />
               ) : null}
 
-              {visible.usage ? <ThreadDetailsUsage {...props.usage} /> : null}
-
-              {visible.context && props.usage.contextWindow ? (
-                <ThreadDetailsContext usage={props.usage.contextWindow} />
+              {visible.usage && !sidebarSlots?.usage ? (
+                <ThreadDetailsUsage {...props.usage} />
               ) : null}
 
-              {/* Shown only when no section above has content, so an emptied card can be refilled. */}
-              <div className="p-2 group-has-[>section>:last-child:not(:empty)]/details-items:hidden">
-                <ThreadDetailsControl
-                  size="xs"
-                  variant="ghost"
-                  part="row"
-                  panel
-                  onClick={(event) => {
-                    const rect = event.currentTarget.getBoundingClientRect();
-                    setMenuPosition({ x: rect.left, y: rect.bottom });
-                  }}
-                >
-                  <SlidersHorizontalIcon className={THREAD_DETAILS_PANEL_ICON_CLASS} aria-hidden />
-                  <span className={cn("ml-0.5", THREAD_DETAILS_PANEL_LABEL_CLASS)}>
-                    Choose what to show
-                  </span>
-                </ThreadDetailsControl>
-              </div>
+              {visible.context && !sidebarSlots?.usage && props.usage.contextWindow ? (
+                <ThreadDetailsContext usage={props.usage.contextWindow} />
+              ) : null}
             </div>
 
             <Menu
@@ -238,7 +216,7 @@ export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
                 align="start"
                 side="bottom"
               >
-                <ThreadDetailsItemsMenuItems />
+                <ThreadDetailsItemsMenuItems pinnedUsage={Boolean(sidebarSlots?.usage)} />
               </MenuPopup>
             </Menu>
           </>

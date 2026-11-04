@@ -1,3 +1,6 @@
+import { createPortal } from "react-dom";
+import { useSidebarWorkspace } from "../sidebar/SidebarWorkspace";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { workspaceAreaProps } from "../../lib/workspaceFocus";
 import {
   useLayoutEffect,
@@ -37,6 +40,9 @@ export function ThreadDetailsCard({
 }) {
   const detailsArea = workspaceAreaProps("details", 3, "Thread details");
   const canvas = useChatCanvas();
+  const sidebarSlots = useSidebarWorkspace();
+  const isMobile = useMediaQuery("max-md");
+  const sidebarTarget = !isMobile ? sidebarSlots?.details : null;
   const preferredPlacement = canvas?.preferredDetailsCard ?? null;
   const placement = canvas?.detailsCardPlacement ?? null;
   const mode = placement ? "inline" : "popover";
@@ -74,7 +80,7 @@ export function ThreadDetailsCard({
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- measures the card's DOM height via ResizeObserver and reports it to the canvas
   useLayoutEffect(() => {
     const element = contentElement;
-    if (!element || density === "essential") return;
+    if (!element || density === "essential" || sidebarTarget) return;
     const measure = () => {
       const frame = element.closest<HTMLElement>("[data-thread-details-card]");
       const next = element.offsetHeight + (frame ? frame.offsetHeight - frame.clientHeight : 0);
@@ -105,6 +111,7 @@ export function ThreadDetailsCard({
     return observeResize(element, measure);
   }, [
     contentElement,
+    sidebarTarget,
     density,
     measurementKey,
     cardWidth,
@@ -112,6 +119,19 @@ export function ThreadDetailsCard({
     environmentId,
     threadId,
   ]);
+  if (sidebarTarget)
+    return createPortal(
+      <aside
+        {...detailsArea}
+        data-thread-details-panel="sidebar"
+        data-thread-details-card
+        onContextMenu={onContextMenu}
+        className="rounded-xl border border-sidebar-border bg-sidebar/90 has-[>div:empty]:hidden"
+      >
+        {children("full")}
+      </aside>,
+      sidebarTarget,
+    );
   const card = (
     <div
       className={cn(

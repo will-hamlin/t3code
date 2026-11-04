@@ -16,6 +16,7 @@ import {
   OmittedWhenNull,
   ProjectId,
   ThreadId,
+  PlanId,
   TrimmedNonEmptyString,
   TrimmedString,
 } from "./baseSchemas.ts";
@@ -1073,8 +1074,48 @@ export const MarshalName = Schema.Literals([
 ]);
 export type MarshalName = typeof MarshalName.Type;
 
+const AssignmentPhaseSnapshot = Schema.Struct({
+  planId: PlanId,
+  markdown: TrimmedNonEmptyString,
+});
+export const AssignmentWorkflow = Schema.Union([
+  Schema.Struct({ phase: Schema.Literal("proposal") }),
+  Schema.Struct({ phase: Schema.Literal("plan"), proposal: AssignmentPhaseSnapshot }),
+  Schema.Struct({
+    phase: Schema.Literal("execution"),
+    proposal: AssignmentPhaseSnapshot,
+    plan: AssignmentPhaseSnapshot,
+  }),
+]);
+export type AssignmentWorkflow = typeof AssignmentWorkflow.Type;
+
 export const ProjectSettingsOverrides = Schema.Struct({
   marshalAgent: Schema.optionalKey(MarshalName),
+  assignments: Schema.optionalKey(
+    Schema.Record(
+      ThreadId,
+      Schema.Struct({
+        title: TrimmedNonEmptyString,
+        brief: TrimmedNonEmptyString,
+        status: Schema.optionalKey(Schema.Literals(["active", "completed"])),
+        marshalAgent: MarshalName,
+        workflow: Schema.optionalKey(AssignmentWorkflow),
+      }),
+    ),
+  ),
+  operations: Schema.optionalKey(
+    Schema.Struct({
+      deployments: Schema.Array(
+        Schema.Struct({
+          id: TrimmedNonEmptyString,
+          label: TrimmedNonEmptyString,
+          url: TrimmedNonEmptyString,
+          status: Schema.Literals(["unknown", "healthy", "deploying", "failed", "paused"]),
+          updatedAt: Schema.String,
+        }),
+      ),
+    }),
+  ),
   worktreeCleanup: Schema.optionalKey(WorktreeCleanup),
   defaultModelSelection: Schema.optionalKey(Schema.NullOr(ModelSelection)),
   defaultRuntimeMode: Schema.optionalKey(RuntimeMode),
@@ -1104,7 +1145,14 @@ export const ProjectSettingsOverrides = Schema.Struct({
   providerInstances: Schema.optionalKey(
     Schema.Record(ProviderInstanceId, ProjectProviderInstanceOverride),
   ),
-} satisfies Record<ProjectScopedServerSettingKey | "providerInstances" | "marshalAgent", unknown>);
+} satisfies Record<
+  | ProjectScopedServerSettingKey
+  | "providerInstances"
+  | "marshalAgent"
+  | "assignments"
+  | "operations",
+  unknown
+>);
 export type ProjectSettingsOverrides = typeof ProjectSettingsOverrides.Type;
 
 // Whole-entry writers must round-trip unknown keys; keep the type closed to catch misspellings.
@@ -1502,6 +1550,9 @@ export const resolveIdleCompaction = (
 
 export const ServerSettingsOperation = Schema.Literals([
   "normalize",
+  "change-project-marshal",
+  "change-assignment-marshal",
+  "marshal-already-assigned",
   "check-exists",
   "create-provider-instance",
   "read-file",
@@ -1539,6 +1590,12 @@ export class ServerSettingsError extends Schema.TaggedError<ServerSettingsError>
   },
 ) {
   override get message(): string {
+    if (this.operation === "marshal-already-assigned")
+      return "This Marshal already has an active assignment. Finish it before assigning another.";
+    if (this.operation === "change-assignment-marshal")
+      return "An assignment’s Marshal cannot be changed after assignment.";
+    if (this.operation === "change-project-marshal")
+      return "A project’s Marshal assignment is permanent and cannot be changed.";
     if (this.operation === "write-managed-setting") {
       return `${this.managedSetting ?? "This setting"} is managed by ${this.managedBy ?? "your organization"} and cannot be changed.`;
     }

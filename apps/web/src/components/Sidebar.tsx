@@ -1,3 +1,4 @@
+import { SidebarWorkspaceSlots } from "./sidebar/SidebarWorkspace";
 import { CreateProjectFolderButton } from "./sidebar/CreateProjectFolderButton";
 import { liveShellEnvironmentIdsAtom } from "../state/shell";
 import { attachSidebarTree } from "../lib/sidebarTree";
@@ -81,7 +82,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
 } from "react";
-import { type AnyRouter, useRouter } from "@tanstack/react-router";
+import { type AnyRouter, useRouter, useMatches } from "@tanstack/react-router";
 
 import {
   isAtomCommandInterrupted,
@@ -440,9 +441,7 @@ function useSidebarThreads(input: {
     folderGroups,
     keepEmptyFolders: keepEmpty,
   } = input;
-  // Folders already separate the work, so boring mode has no Working shelf.
-  const workingShelfEnabled =
-    useClientSettings((s) => s.sidebarWorkingShelfEnabled) && folderGroups === null;
+  const workingShelfEnabled = true;
   const environmentConnections = useEnvironmentConnectionSummaries();
   const liveShellEnvironmentIds = useAtomValue(liveShellEnvironmentIdsAtom);
   const disconnectedEnvironmentIds = new Set(
@@ -1107,6 +1106,12 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         thread.environmentId === routeThreadRef?.environmentId &&
         thread.id === routeThreadRef?.threadId,
     );
+  const overviewProjectKey = useMatches({
+    select: (matches) => {
+      const params = matches.at(-1)?.params;
+      return params && "projectKey" in params ? params.projectKey : undefined;
+    },
+  });
   const routeProjectGroup = routeProject
     ? scopeGroups.find((group) =>
         group.memberProjectRefs.some(
@@ -1115,7 +1120,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
             ref.projectId === routeProject.projectId,
         ),
       )
-    : null;
+    : (scopeGroups.find((group) => group.projectKey === overviewProjectKey) ?? null);
   const chosenProjectScopeKeys = routeProjectGroup
     ? [routeProjectGroup.projectKey]
     : resolveSidebarProjectScopeKeys({
@@ -1949,18 +1954,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         const key = scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id));
         return { kind: "thread", key, section };
       });
-    // Boring mode keeps a pinned open project or one the user filtered to, so it can start a thread.
-    if (
-      !hasProjectFolders &&
-      pinnedThreads.length +
-        activeThreads.length +
-        workingThreads.length +
-        snoozedThreads.length +
-        settledCount ===
-        0
-    ) {
-      return [];
-    }
     const items: SidebarListItem[] = [{ kind: "marker", marker: "pinned-header" }];
     const pinnedRows = rowsOf(pinnedThreads, "pinned");
     items.push(...pinnedRows);
@@ -1968,10 +1961,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     const activeRows = rowsOf(activeThreads, "active");
     items.push({ kind: "marker", marker: "active-placeholder" });
     items.push(...activeRows);
-    if (workingThreads.length > 0) {
-      items.push({ kind: "marker", marker: "working-header" });
-      items.push(...rowsOf(visibleWorkingThreads, "working"));
-    }
+    items.push({ kind: "marker", marker: "working-header" });
+    items.push(...rowsOf(visibleWorkingThreads, "working"));
     if (snoozedThreads.length > 0) {
       items.push({ kind: "marker", marker: "snoozed-header" });
       items.push(...rowsOf(visibleSnoozedThreads, "snoozed"));
@@ -3017,10 +3008,16 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           <SidebarGroup className="z-[1]">
             <SidebarThreadHeader
               projectName={routeProjectGroup?.title}
+              projectKey={routeProjectGroup?.projectKey}
               projectRef={
                 routeProject
                   ? scopeProjectRef(routeProject.environmentId, routeProject.projectId)
-                  : null
+                  : routeProjectGroup?.memberProjects[0]
+                    ? scopeProjectRef(
+                        routeProjectGroup.memberProjects[0].environmentId,
+                        routeProjectGroup.memberProjects[0].id,
+                      )
+                    : null
               }
               projectFolderAction={
                 routeProject ? (
@@ -3525,8 +3522,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                               <SidebarDragBoundary
                                 key="pinned-divider"
                                 marker="pinned-divider"
-                                label="Active"
-                                visible={from !== null}
+                                label="Needs attention"
+                                count={activeThreads.length}
+                                visible={true}
                                 isDropTarget={dragTargetSection === "active"}
                               />,
                             );
@@ -3554,7 +3552,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                               <SidebarSectionHeader
                                 key="working-shelf-header"
                                 marker="working-header"
-                                className="mt-auto"
                                 label="Working"
                                 count={workingThreads.length}
                                 toggle={{
@@ -3569,7 +3566,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                               <SidebarSectionHeader
                                 key="snoozed-shelf-header"
                                 marker="snoozed-header"
-                                className={cn(workingThreads.length === 0 && "mt-auto")}
                                 label="Snoozed"
                                 count={snoozedThreads.length}
                                 toggle={{
@@ -3584,9 +3580,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                               <SidebarSectionHeader
                                 key="settled-shelf-header"
                                 marker="settled-header"
-                                className={cn(
-                                  workingThreads.length + snoozedThreads.length === 0 && "mt-auto",
-                                )}
                                 label="Complete"
                                 count={settledCount}
                                 dragging={from !== null}
@@ -3681,6 +3674,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           ) : null}
         </SidebarGroup>
       </SidebarContent>
+      <SidebarWorkspaceSlots />
       <SidebarChromeFooter />
     </>
   );

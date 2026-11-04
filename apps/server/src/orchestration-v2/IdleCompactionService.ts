@@ -15,14 +15,14 @@ import * as Stream from "effect/Stream";
 
 import { forkParked } from "../serverActivation.ts";
 import * as ServerSettings from "../serverSettings.ts";
-import { idleCompactionWindow } from "./IdleCompaction.ts";
+import { idleCompactionWindow, marshalCompactionRun } from "./IdleCompaction.ts";
 import * as Orchestrator from "./Orchestrator.ts";
 import * as ProjectionStore from "./ProjectionStore.ts";
 
 /**
  * Beta: when a run completes on a Claude instance set to compact before the
  * cache expires, waits until shortly before its prompt cache expires and sends
- * `/compact` as a visible T3 Code turn. Timers live in
+ * `/compact` as a visible efficio turn. Timers live in
  * memory, so a server restart skips compactions that were still waiting.
  */
 export const make = Effect.gen(function* () {
@@ -37,6 +37,60 @@ export const make = Effect.gen(function* () {
       while (true) {
         const current = yield* settings.getSettings;
         const thread = yield* projections.getThread(threadId);
+        const assignment =
+          current.projectSettingsOverrides[thread.projectId]?.assignments?.[thread.id];
+        if (
+          assignment &&
+          assignment.status !== "completed" &&
+          resolveProjectProviderInstanceEnabled(
+            current,
+            thread.projectId,
+            thread.providerInstanceId,
+          )
+        ) {
+          const records = yield* projections.getThreadRecords(
+            threadId,
+            [
+              "runs",
+              "messages",
+              "providerThreads",
+              "providerTurns",
+              "runtimeRequests",
+              "turnItems",
+              "contextTransfers",
+            ],
+            {
+              messageRunIds: [runId],
+              runStatuses: ["preparing", "starting", "queued", "running", "waiting", "rolled_back"],
+              includeLatestRun: true,
+              turnItemStatuses: ["pending", "running", "waiting"],
+              providerThreadIds: thread.activeProviderThreadId
+                ? [thread.activeProviderThreadId]
+                : [],
+              providerTurnThreadIds: thread.activeProviderThreadId
+                ? [thread.activeProviderThreadId]
+                : [],
+              latestProviderTurnUsageOnly: true,
+              runtimeRequestStatuses: ["pending"],
+              contextTransferStatuses: ["pending"],
+            },
+          );
+          const due = marshalCompactionRun(records);
+          if (due?.id === runId) {
+            yield* orchestrator.dispatch({
+              type: "message.dispatch",
+              commandId: CommandId.make(`server:marshal-compact:${threadId}:${runId}`),
+              messageId: MessageId.make(`marshal-compact:${threadId}:${runId}`),
+              threadId,
+              text: "/compact",
+              attachments: [],
+              createdBy: "agent",
+              creationSource: "server",
+              dispatchMode: { type: "queue_after_active" },
+            });
+            return;
+          }
+        }
         const claudeInstance = Object.hasOwn(current.providerInstances, thread.providerInstanceId)
           ? current.providerInstances[thread.providerInstanceId]?.driver === "claudeAgent"
           : thread.providerInstanceId === "claudeAgent";

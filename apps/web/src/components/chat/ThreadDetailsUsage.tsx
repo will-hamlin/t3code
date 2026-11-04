@@ -64,7 +64,7 @@ export function ThreadDetailsUsage({
       title="Usage limits"
       showHeading={false}
     >
-      <div className="grid grid-cols-[auto_minmax(3rem,1fr)_auto] gap-x-3 text-xs">
+      <div className="grid grid-cols-[auto_minmax(1.5rem,1fr)_auto] gap-x-2 text-xs">
         {notice ? (
           <UsageRow
             label="Limits"
@@ -100,7 +100,7 @@ export function ThreadDetailsContext({ usage }: { readonly usage: ContextWindowS
       title="Context window"
       showHeading={false}
     >
-      <div className="grid grid-cols-[auto_minmax(3rem,1fr)_auto] gap-x-3 text-xs">
+      <div className="grid grid-cols-[auto_minmax(1.5rem,1fr)_auto] gap-x-2 text-xs">
         <UsageRow
           label="Context"
           fill={used}

@@ -1,3 +1,5 @@
+import { createPortal } from "react-dom";
+import { useSidebarWorkspace, SidebarWorkspaceProvider } from "./sidebar/SidebarWorkspace";
 import { useAtomValue } from "@effect/atom-react";
 import * as Schema from "effect/Schema";
 import {
@@ -329,6 +331,8 @@ function SidebarControl() {
   const keybindings = useAtomValue(primaryServerKeybindingsAtom);
   const { toggleSidebar, isMobile, mobileSheetMounted } = useSidebar();
   const isSidebarVisible = useSidebarVisibility();
+  const sidebarSlots = useSidebarWorkspace();
+  const controlsTarget = isSidebarVisible ? sidebarSlots?.controls : null;
   const environmentIdentificationMode = useEnvironmentIdentificationMode();
   const stageBackdropVariant = useSidebarStageBackdropVariant(environmentIdentificationMode);
   const shortcutLabel = shortcutLabelForCommand(keybindings, "sidebar.toggle", {
@@ -382,12 +386,14 @@ function SidebarControl() {
       node === null ? undefined : registerAppShellCommands(router, node),
   );
 
-  return (
+  const control = (
     <div
       ref={appShellCommandsRef}
       className={cn(
-        "pointer-events-none fixed left-[var(--workspace-controls-left)] top-[var(--workspace-controls-top)] z-50 ml-px flex h-[var(--workspace-topbar-height)] items-center",
-        ((isMobile && mobileSheetMounted) || dashboardOpen) && "hidden",
+        controlsTarget
+          ? "pointer-events-none flex h-8 items-center"
+          : "pointer-events-none fixed left-[var(--workspace-controls-left)] top-[var(--workspace-controls-top)] z-50 flex h-[var(--workspace-topbar-height)] items-center",
+        (dashboardOpen || (isMobile && mobileSheetMounted && !controlsTarget)) && "hidden",
       )}
       data-sidebar-control=""
     >
@@ -410,6 +416,7 @@ function SidebarControl() {
       </Tooltip>
     </div>
   );
+  return controlsTarget ? createPortal(control, controlsTarget) : control;
 }
 
 export function AppSidebarLayout({ children }: { children: ReactNode }) {
@@ -455,42 +462,44 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   } as CSSProperties;
 
   return (
-    <PanelAnimationSuppressionProvider value={panelAnimationsSuppressed}>
-      <SidebarProvider
-        className="h-dvh! min-h-0!"
-        data-panel-animations={routePanelAnimationsActive ? "true" : "false"}
-        defaultOpen
-        style={sidebarProviderStyle}
-      >
-        <SidebarBrandWidthProbe isElectron={isElectron} onWidthChange={setBrandWidth} />
-        {!dashboardOpen ? (
-          <Sidebar
-            side="left"
-            collapsible="offcanvas"
-            data-app-sidebar=""
-            {...sidebarArea}
-            role="navigation"
-            aria-label="Threads"
-            resizable={{
-              maxWidth: sidebarMaximumWidth,
-              minWidth: sidebarMinimumWidth,
-              shouldAcceptWidth: ({ currentWidth, nextWidth, wrapper }) =>
-                nextWidth <= currentWidth ||
-                wrapper.clientWidth - nextWidth >= THREAD_MAIN_CONTENT_MIN_WIDTH,
-              storageKey: THREAD_SIDEBAR_WIDTH_STORAGE_KEY,
-              onResize: setSidebarWidth,
-            }}
-            style={windowControlsInsetStyle}
-          >
-            <ThreadSidebar routeReveal={sidebarRouteReveal} />
-            <SidebarRail onDoubleClick={resetSidebarWidth} />
-          </Sidebar>
-        ) : null}
-        {children}
-        <BackgroundThreadAnnouncer />
-        <SidebarControl />
-        {isElectron ? <HistorySwipeNavigation /> : null}
-      </SidebarProvider>
-    </PanelAnimationSuppressionProvider>
+    <SidebarWorkspaceProvider>
+      <PanelAnimationSuppressionProvider value={panelAnimationsSuppressed}>
+        <SidebarProvider
+          className="h-dvh! min-h-0!"
+          data-panel-animations={routePanelAnimationsActive ? "true" : "false"}
+          defaultOpen
+          style={sidebarProviderStyle}
+        >
+          <SidebarBrandWidthProbe isElectron={isElectron} onWidthChange={setBrandWidth} />
+          {!dashboardOpen ? (
+            <Sidebar
+              side="left"
+              collapsible="offcanvas"
+              data-app-sidebar=""
+              {...sidebarArea}
+              role="navigation"
+              aria-label="Threads"
+              resizable={{
+                maxWidth: sidebarMaximumWidth,
+                minWidth: sidebarMinimumWidth,
+                shouldAcceptWidth: ({ currentWidth, nextWidth, wrapper }) =>
+                  nextWidth <= currentWidth ||
+                  wrapper.clientWidth - nextWidth >= THREAD_MAIN_CONTENT_MIN_WIDTH,
+                storageKey: THREAD_SIDEBAR_WIDTH_STORAGE_KEY,
+                onResize: setSidebarWidth,
+              }}
+              style={windowControlsInsetStyle}
+            >
+              <ThreadSidebar routeReveal={sidebarRouteReveal} />
+              <SidebarRail onDoubleClick={resetSidebarWidth} />
+            </Sidebar>
+          ) : null}
+          {children}
+          <BackgroundThreadAnnouncer />
+          <SidebarControl />
+          {isElectron ? <HistorySwipeNavigation /> : null}
+        </SidebarProvider>
+      </PanelAnimationSuppressionProvider>
+    </SidebarWorkspaceProvider>
   );
 }

@@ -1,3 +1,4 @@
+import { displayText } from "~/lib/displayText";
 import {
   type AddProjectRemoteSource,
   type NewProjectPublishTarget,
@@ -139,8 +140,8 @@ export function NewProjectSummary(props: {
           </span>
           <span className="truncate text-muted-foreground/85 text-xs">
             {props.name.length > 0
-              ? `Creates ${props.pathPreview}`
-              : `Goes in ${props.projectsRoot}`}
+              ? "Creates a new workspace"
+              : "Uses your default workspace location"}
             {props.environmentLabel === null ? null : ` on ${props.environmentLabel}`}
           </span>
         </span>
@@ -163,7 +164,9 @@ export function RemoteRepositorySummary(props: {
         </CommandPaletteTitleIcon>
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="truncate text-foreground text-sm">{props.title}</span>
-          <span className="truncate text-muted-foreground/85 text-xs">{props.description}</span>
+          <span className="truncate text-muted-foreground/85 text-xs">
+            {displayText(props.description)}
+          </span>
         </span>
       </div>
     </div>

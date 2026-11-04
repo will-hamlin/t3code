@@ -8,7 +8,25 @@
   animation: drift 8s linear infinite;
 }
 
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.27;
+  }
+}
+
+.breathing {
+  animation: breathe 12s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .breathing {
+    animation: none;
+    opacity: 0.2;
+  }
   .moving {
     animation: none;
   }

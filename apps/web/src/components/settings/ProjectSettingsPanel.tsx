@@ -1,3 +1,4 @@
+import { entryName } from "~/lib/displayText";
 import { useComposerMenuState } from "../chat/useComposerMenuState";
 import { useOrchestrationCommand } from "../../state/use-orchestration-command";
 import { AuthOrchestrationOperateScope } from "@t3tools/contracts";
@@ -108,7 +109,7 @@ function CheckoutGroupingSelect({ member }: { member: SidebarProjectGroupMember 
     >
       <SelectTrigger
         size="sm"
-        aria-label={`Grouping rule for ${member.workspaceRoot} on ${
+        aria-label={`Grouping rule for ${entryName(member.workspaceRoot)} on ${
           member.environmentLabel
             ? `${member.environmentLabel} (${member.environmentId})`
             : member.environmentId
@@ -424,7 +425,7 @@ function ProjectDetail({
           variant="outline"
           disabled={!editableIds.has(member.environmentId)}
           onClick={() => void removeMembers([member])}
-          aria-label={`Remove checkout ${member.workspaceRoot}`}
+          aria-label={`Remove checkout ${entryName(member.workspaceRoot)}`}
         >
           Remove
         </Button>
@@ -443,7 +444,7 @@ function ProjectDetail({
             <SettingsRow
               key={member.physicalProjectKey}
               title={member.environmentLabel ?? "Environment"}
-              description={member.workspaceRoot}
+              description={entryName(member.workspaceRoot)}
               control={checkoutControls(member)}
             />
           ));
@@ -466,9 +467,9 @@ function ProjectDetail({
                 {!hasMultiple ? (
                   <Tooltip>
                     <TooltipTrigger render={<span className="block truncate" />}>
-                      {firstMember.workspaceRoot}
+                      {entryName(firstMember.workspaceRoot)}
                     </TooltipTrigger>
-                    <TooltipPopup>{firstMember.workspaceRoot}</TooltipPopup>
+                    <TooltipPopup>{entryName(firstMember.workspaceRoot)}</TooltipPopup>
                   </Tooltip>
                 ) : null}
               </>
@@ -488,9 +489,9 @@ function ProjectDetail({
                           <span className="min-w-0 max-w-full truncate text-xs text-muted-foreground/80" />
                         }
                       >
-                        {member.workspaceRoot}
+                        {entryName(member.workspaceRoot)}
                       </TooltipTrigger>
-                      <TooltipPopup>{member.workspaceRoot}</TooltipPopup>
+                      <TooltipPopup>{entryName(member.workspaceRoot)}</TooltipPopup>
                     </Tooltip>
                     <div className="shrink-0">{checkoutControls(member)}</div>
                   </div>

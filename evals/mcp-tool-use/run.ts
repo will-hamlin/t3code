@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { marshalTurnText } from "../../packages/shared/src/projectOrchestrators.ts";
+import { MarshalName } from "@t3tools/contracts";
+
 // @effect-diagnostics nodeBuiltinImport:off
 /**
  * Replays small fake threads on a Claude or Codex model to check T3's MCP tool use. A trimmed
@@ -253,6 +256,7 @@ export const McpToolUseCase = Schema.Struct({
     /** delegate_task `role` for a delegated child. T3 builds the child's first message from it. */
     delegateRole: Schema.optional(OrchestratorMcpTaskRole),
     context: Schema.optional(Schema.String),
+    marshal: Schema.optional(MarshalName),
     priorTurns: Schema.optional(
       Schema.Array(
         Schema.Struct({
@@ -946,7 +950,16 @@ export const buildMessages = (sample: Sample) => {
     sideChatContext === undefined ? userText : withInlineContext(sideChatContext, userText);
   const childPrompt = () => taskPrompt({ task: prompt, role: delegateRole });
   if (testCase.prompt !== "")
-    push("user", text(role === "delegated-child" ? childPrompt() : prompt));
+    push(
+      "user",
+      text(
+        marshalTurnText(
+          role === "delegated-child" ? childPrompt() : prompt,
+          testCase.setup.marshal,
+          role !== "top",
+        ),
+      ),
+    );
   // Claude Code gives a subagent its SubagentStart hooks' context as a reminder after the task.
   if (native && base.subagentContext) {
     push("user", reminder(`SubagentStart hook additional context: ${base.subagentContext}`));

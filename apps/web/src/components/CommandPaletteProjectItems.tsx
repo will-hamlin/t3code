@@ -1,3 +1,4 @@
+import { entryName } from "~/lib/displayText";
 import type { EnvironmentId, EnvironmentMachineKind } from "@t3tools/contracts";
 
 import type { SidebarProjectSnapshot } from "../sidebarProjectGrouping";
@@ -115,7 +116,7 @@ function ProjectLocationDescription(props: {
         <span className="truncate">{location.label}</span>
       </span>
       <CommandPaletteMetaDot />
-      <span className="truncate">{props.workspaceRoot}</span>
+      <span className="truncate">{entryName(props.workspaceRoot)}</span>
     </span>
   );
 }

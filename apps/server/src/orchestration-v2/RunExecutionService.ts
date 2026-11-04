@@ -927,8 +927,11 @@ export const layer: Layer.Layer<
           const settings = yield* serverSettings.getSettings;
           const responseStreamingMode = resolveProjectSettings(settings, input.appThread.projectId)
             .settings.responseStreamingMode;
-          const marshal =
-            settings.projectSettingsOverrides[input.appThread.projectId]?.marshalAgent;
+          const overrides = settings.projectSettingsOverrides[input.appThread.projectId];
+          const assignment =
+            overrides?.assignments?.[input.appThread.id] ??
+            overrides?.assignments?.[input.appThread.lineage.rootThreadId];
+          const marshal = assignment?.marshalAgent ?? overrides?.marshalAgent;
           // Side chats share the parent's worktree; a snapshot would capture the parent's edits.
           yield* (
             input.appThread.lineage.sideChat === true
@@ -953,7 +956,7 @@ export const layer: Layer.Layer<
           ) {
             return null;
           }
-          return { responseStreamingMode, marshal };
+          return { responseStreamingMode, marshal, assignment };
         }).pipe(
           Effect.catchCause((cause) =>
             Effect.gen(function* () {
@@ -1000,7 +1003,7 @@ export const layer: Layer.Layer<
         if (prepared === null) {
           return;
         }
-        const { responseStreamingMode, marshal } = prepared;
+        const { responseStreamingMode, marshal, assignment } = prepared;
         const terminalEvent = yield* Ref.make<ProviderTerminalEvent | null>(null);
         const latestTurnItemOrdinal = yield* Ref.make(input.providerTurnOrdinal * 100);
         const latestProviderThread = yield* Ref.make(input.providerThread);
@@ -1715,6 +1718,7 @@ export const layer: Layer.Layer<
               input.message.text,
               marshal,
               input.appThread.lineage.relationshipToParent === "subagent",
+              assignment,
             ),
           },
           modelSelection: input.modelSelection,

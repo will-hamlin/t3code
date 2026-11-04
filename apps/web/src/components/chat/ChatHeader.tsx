@@ -90,6 +90,7 @@ export const ChatHeader = memo(function ChatHeader({
     activeProject
       ? { environmentId: activeProject.environmentId, projectId: activeProject.id }
       : null,
+    activeThreadId,
   );
   const activeProjectCwd = activeProject?.workspaceRoot ?? null;
   const interfaceFont = useClientSettings((settings) => settings.fontFamilySans);

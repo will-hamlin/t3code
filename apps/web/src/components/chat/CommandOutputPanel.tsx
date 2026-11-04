@@ -1,3 +1,4 @@
+import { displayText } from "~/lib/displayText";
 import type { CommandOutputView } from "@t3tools/client-runtime/state/command-output";
 import type { EnvironmentId, ThreadId, TurnItemId } from "@t3tools/contracts";
 import { TERMINAL_PALETTES, terminalOutputSpans } from "@t3tools/shared/terminalOutput";
@@ -52,7 +53,7 @@ export function CommandOutputPanel(props: {
     return data.running ? null : <div className="text-muted-foreground italic">No output.</div>;
   }
   // Parse after all hooks to preserve the text/theme compiler cache.
-  const spans = terminalOutputSpans(text, TERMINAL_PALETTES[resolvedTheme]);
+  const spans = terminalOutputSpans(displayText(text), TERMINAL_PALETTES[resolvedTheme]);
   return (
     <div>
       {data?.output.truncated ? (

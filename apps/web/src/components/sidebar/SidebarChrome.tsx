@@ -1,3 +1,6 @@
+import { SlidersHorizontalIcon } from "lucide-react";
+import { Menu, MenuTrigger, MenuPopup } from "../ui/menu";
+import { ThreadDetailsItemsMenuItems } from "../chat/ThreadDetailsItemsMenu";
 import { DotMatrix } from "../DotMatrix";
 import { ArrowLeftIcon, ArrowRightIcon, ChartNoAxesColumnIcon, SettingsIcon } from "lucide-react";
 import type { ReactNode } from "react";
@@ -27,7 +30,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
 } from "../ui/sidebar";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
@@ -61,13 +63,6 @@ export const SidebarChromeHeader = memo(function SidebarChromeHeader({
       )}
     >
       <DotMatrix fade />
-      <div className="relative top-[calc(var(--workspace-controls-top)-env(safe-area-inset-top))] z-10 ml-[calc(var(--workspace-controls-left)+1px-env(safe-area-inset-left))] flex shrink-0 items-center md:hidden">
-        <SidebarTrigger
-          variant={backdropVariant ? "media-navigation" : "ghost"}
-          className="relative top-auto translate-y-0"
-          aria-label="Toggle main sidebar"
-        />
-      </div>
       <div className="relative z-10 flex h-8 min-w-0 flex-1 flex-wrap content-start items-center gap-x-2 overflow-hidden py-0.5">
         <div className="flex shrink-0 items-center gap-1">
           {isElectron ? (
@@ -249,6 +244,25 @@ const SidebarUtilityMenu = memo(function SidebarUtilityMenu() {
             label="Usage"
             onClick={handleUsageClick}
           />
+          <SidebarMenuItem className="shrink-0">
+            <Menu>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <MenuTrigger
+                      render={<SidebarMenuButton size="icon" aria-label="Choose what to show" />}
+                    />
+                  }
+                >
+                  <SlidersHorizontalIcon />
+                </TooltipTrigger>
+                <TooltipPopup side="top">Choose what to show</TooltipPopup>
+              </Tooltip>
+              <MenuPopup side="top" align="start">
+                <ThreadDetailsItemsMenuItems pinnedUsage />
+              </MenuPopup>
+            </Menu>
+          </SidebarMenuItem>
         </>
       )}
       <SidebarThreadUndoNotice />

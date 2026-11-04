@@ -6,6 +6,7 @@ import {
   type ManagedPolicyDocument,
   ModelSelection,
   ProjectId,
+  ThreadId,
   ProjectScript,
   ProviderDriverKind,
   ProviderInstanceId,
@@ -135,6 +136,122 @@ function strictSecretReferencePaths(
 }
 
 it.layer(Layer.mergeAll(NodeServices.layer, NodeCrypto.layer))("server settings", (it) => {
+  it.effect("keeps assignment Marshals and merges assignments within a project", () =>
+    Effect.gen(function* () {
+      const settings = yield* ServerSettingsModule.ServerSettingsService;
+      const id = ProjectId.make("assignment-project");
+      const first = ThreadId.make("assignment-first");
+      const second = ThreadId.make("assignment-second");
+      yield* settings.updateSettings({
+        projectSettingsOverrides: {
+          [id]: {
+            assignments: { [first]: { title: "First", brief: "First task", marshalAgent: "Ney" } },
+          },
+        },
+      });
+      const next = yield* settings.updateSettings({
+        projectSettingsOverrides: {
+          [id]: {
+            assignments: {
+              [second]: { title: "Second", brief: "Second task", marshalAgent: "Davout" },
+            },
+          },
+        },
+      });
+      assert.equal(next.projectSettingsOverrides[id]?.assignments?.[first]?.marshalAgent, "Ney");
+      assert.equal(
+        next.projectSettingsOverrides[id]?.assignments?.[second]?.marshalAgent,
+        "Davout",
+      );
+      const failure = yield* Effect.flip(
+        settings.updateSettings({
+          projectSettingsOverrides: {
+            [id]: {
+              assignments: {
+                [first]: { title: "First", brief: "First task", marshalAgent: "Soult" },
+              },
+            },
+          },
+        }),
+      );
+      assert.equal(failure.operation, "change-assignment-marshal");
+      const unrelated = yield* settings.updateSettings({
+        projectSettingsOverrides: { [id]: { defaultAutoPull: true } },
+      });
+      assert.equal(
+        Object.keys(unrelated.projectSettingsOverrides[id]?.assignments ?? {}).length,
+        2,
+      );
+      const otherProject = ProjectId.make("other-assignment-project");
+      const third = ThreadId.make("assignment-third");
+      const duplicate = yield* Effect.flip(
+        settings.updateSettings({
+          projectSettingsOverrides: {
+            [otherProject]: {
+              assignments: {
+                [third]: { title: "Third", brief: "Another task", marshalAgent: "Ney" },
+              },
+            },
+          },
+        }),
+      );
+      assert.equal(duplicate.operation, "marshal-already-assigned");
+      yield* settings.updateSettings({
+        projectSettingsOverrides: {
+          [id]: {
+            assignments: {
+              [first]: {
+                title: "First",
+                brief: "First task",
+                marshalAgent: "Ney",
+                status: "completed",
+              },
+            },
+          },
+        },
+      });
+      const reassigned = yield* settings.updateSettings({
+        projectSettingsOverrides: {
+          [otherProject]: {
+            assignments: {
+              [third]: { title: "Third", brief: "Another task", marshalAgent: "Ney" },
+            },
+          },
+        },
+      });
+      assert.equal(
+        reassigned.projectSettingsOverrides[otherProject]?.assignments?.[third]?.marshalAgent,
+        "Ney",
+      );
+    }).pipe(Effect.provide(layerServerSettings())),
+  );
+  it.effect("keeps a project's Marshal after its initial assignment", () =>
+    Effect.gen(function* () {
+      const settings = yield* ServerSettingsModule.ServerSettingsService;
+      const id = ProjectId.make("marshal-project");
+      yield* settings.updateSettings({
+        projectSettingsOverrides: { [id]: { marshalAgent: "Ney" } },
+      });
+      const failure = yield* Effect.flip(
+        settings.updateSettings({ projectSettingsOverrides: { [id]: { marshalAgent: "Davout" } } }),
+      );
+      assert.equal(failure.operation, "change-project-marshal");
+      const unchanged = yield* settings.getSettings;
+      assert.equal(unchanged.projectSettingsOverrides[id]?.marshalAgent, "Ney");
+      const edited = yield* settings.updateSettings({
+        projectSettingsOverrides: { [id]: { marshalAgent: "Ney", defaultAutoPull: false } },
+      });
+      assert.equal(edited.projectSettingsOverrides[id]?.marshalAgent, "Ney");
+      assert.equal(edited.projectSettingsOverrides[id]?.defaultAutoPull, false);
+      const unrelated = yield* settings.updateSettings({
+        projectSettingsOverrides: { [id]: { defaultAutoPull: true } },
+      });
+      assert.equal(unrelated.projectSettingsOverrides[id]?.marshalAgent, "Ney");
+      assert.equal(unrelated.projectSettingsOverrides[id]?.defaultAutoPull, true);
+      const deleted = yield* settings.updateSettings({ projectSettingsOverrides: { [id]: null } });
+      assert.isUndefined(deleted.projectSettingsOverrides[id]);
+    }).pipe(Effect.provide(layerServerSettings())),
+  );
   it.effect("serializes concurrent model preference edits without cancelling duplicate adds", () =>
     Effect.gen(function* () {
       const service = yield* ServerSettingsModule.ServerSettingsService;

@@ -1,3 +1,5 @@
+import { useSidebarWorkspace } from "../sidebar/SidebarWorkspace";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { useLayoutEffect, useRef, useState, type ComponentProps, type CSSProperties } from "react";
 import { useStore } from "zustand";
 import { ChatCanvasContext } from "./ChatCanvasContext";
@@ -13,6 +15,7 @@ export function ChatCanvas({
   preview,
   composerOverlayElement,
   detailsCardTopInset = 0,
+  activityCards = false,
   children,
   ...props
 }: Omit<ComponentProps<"div">, "className" | "style" | "ref"> & {
@@ -23,6 +26,7 @@ export function ChatCanvas({
   preview: ChatCanvasPreview | null;
   composerOverlayElement: HTMLElement | null;
   detailsCardTopInset?: number;
+  activityCards?: boolean;
 }) {
   const elementRef = useRef<HTMLDivElement | null>(null);
   const widthProbeRef = useRef<HTMLDivElement | null>(null);
@@ -72,12 +76,14 @@ export function ChatCanvas({
       ? false
       : selectThreadPanelOpen(state.threadPanelVisibilityByThreadKey, threadRef, "inline"),
   );
+  const sidebarSlots = useSidebarWorkspace();
+  const isMobile = useMediaQuery("max-md");
   const model = resolveChatCanvasModel({
     measurements,
     detailsCardMeasurement,
     threadRef,
     preview,
-    detailsCardInlineOpen,
+    detailsCardInlineOpen: detailsCardInlineOpen && (!sidebarSlots?.details || isMobile),
   });
   const context = {
     container: model.container,
@@ -112,7 +118,18 @@ export function ChatCanvas({
           aria-hidden
           className="pointer-events-none invisible absolute h-0 w-(--chat-content-max-width) min-w-[40rem] box-content ps-3 sm:ps-12"
         />
-        {children}
+        <div
+          className="contents"
+          style={
+            activityCards && measurements.width >= 1120
+              ? ({
+                  "--chat-content-max-width": `${Math.min(measurements.maxChatWidth, measurements.width - 640)}px`,
+                } as CSSProperties)
+              : undefined
+          }
+        >
+          {children}
+        </div>
       </div>
     </ChatCanvasContext>
   );

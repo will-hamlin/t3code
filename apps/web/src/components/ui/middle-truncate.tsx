@@ -1,10 +1,11 @@
+import { displayText } from "~/lib/displayText";
 import { type ComponentProps, useLayoutEffect, useRef } from "react";
 
 import { observeResize } from "~/lib/observeResize";
 import { cn } from "~/lib/utils";
 
 export function MiddleTruncate({
-  value,
+  value: originalValue,
   tail,
   showTitle = true,
   variant = "default",
@@ -16,6 +17,7 @@ export function MiddleTruncate({
   showTitle?: boolean;
   variant?: "default" | "cap-aligned";
 }) {
+  const value = displayText(originalValue);
   const split = splitForMiddleTruncate(value, tail);
   const headRef = useRef<HTMLSpanElement>(null);
   const head = split?.head;

@@ -1,3 +1,4 @@
+import { displayText } from "~/lib/displayText";
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
 import {
   createContext,
@@ -151,7 +152,7 @@ function TooltipPopup({
           {...props}
         >
           <div className="min-w-0 px-2 py-1" data-slot="tooltip-viewport">
-            {children}
+            {typeof children === "string" ? displayText(children) : children}
           </div>
         </TooltipPrimitive.Popup>
       </TooltipPositioner>

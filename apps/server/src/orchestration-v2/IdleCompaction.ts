@@ -104,3 +104,64 @@ export function idleCompactionWindow(
   if (!Number.isFinite(endMs) || nowMs >= endMs) return null;
   return { runId: latestRun.id, startMs: endMs - LEAD_MS, endMs };
 }
+
+/** Compact only idle root Marshals; never swallow pending work, approvals, or a compaction. */
+export function marshalCompactionRun(
+  records: IdleCompactionRecords,
+): (typeof records.runs)[number] | null {
+  const {
+    thread,
+    runs,
+    messages,
+    providerThreads,
+    providerTurns,
+    runtimeRequests,
+    turnItems,
+    contextTransfers,
+  } = records;
+  if (
+    thread.deletedAt !== null ||
+    thread.archivedAt !== null ||
+    thread.lineage.parentThreadId ||
+    thread.settledAt !== null ||
+    thread.settledOverride === "settled"
+  )
+    return null;
+  const latest = runs
+    .filter((run) => run.status !== "cancelled" || run.startedAt !== null)
+    .toSorted((a, b) => b.ordinal - a.ordinal)[0];
+  if (
+    latest?.status !== "completed" ||
+    runs.some((run) =>
+      ["preparing", "starting", "queued", "running", "waiting"].includes(run.status),
+    )
+  )
+    return null;
+  const message = messages.find((entry) => entry.id === latest.userMessageId);
+  if (!message || message.text.trim().toLowerCase() === "/compact") return null;
+  if (
+    runtimeRequests.some((request) => request.status === "pending") ||
+    contextTransfers.some((transfer) => transfer.status === "pending") ||
+    derivePendingBackgroundWork({
+      latestRun: latest,
+      runs,
+      providerThreads,
+      turnItems,
+      activeProviderThreadId: thread.activeProviderThreadId,
+    }).length
+  )
+    return null;
+  const provider = providerThreads.find((entry) => entry.id === thread.activeProviderThreadId);
+  if (
+    !provider ||
+    !["codex", "claudeAgent"].includes(provider.driver) ||
+    provider.id !== latest.providerThreadId ||
+    provider.providerInstanceId !== thread.providerInstanceId
+  )
+    return null;
+  const usage = providerTurns
+    .filter((turn) => turn.providerThreadId === provider.id && turn.tokenUsage)
+    .map((turn) => turn.tokenUsage!)
+    .toSorted((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))[0];
+  return (usage?.usedTokens ?? 0) >= 32_000 ? latest : null;
+}
